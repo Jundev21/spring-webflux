@@ -1,0 +1,11 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test
+  cache:
+    type: redis
+    host:
+    post:
+    password:
+
+
