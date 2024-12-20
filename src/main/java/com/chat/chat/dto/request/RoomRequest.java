@@ -1,4 +1,9 @@
 package com.chat.chat.dto.request;
 
-public class RoomRequest {
+public record RoomRequest(
+	String roomName,
+	String roomPassword,
+	String adminMemberId
+) {
+
 }

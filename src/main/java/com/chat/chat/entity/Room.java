@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
+import com.chat.chat.dto.request.RoomRequest;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,4 +27,9 @@ public class Room {
 	@CreatedDate
 	private LocalDate createdDate;
 
+	public Room(RoomRequest roomRequest) {
+		this.roomName = roomRequest.roomName();
+		this.roomPassword = roomRequest.roomPassword();
+		this.adminMemberId = roomRequest.adminMemberId();
+	}
 }
