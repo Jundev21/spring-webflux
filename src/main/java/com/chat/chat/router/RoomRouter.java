@@ -14,11 +14,11 @@ public class RoomRouter {
 	@Bean
 	public RouterFunction<ServerResponse> roomRouters(RoomHandler roomHandler) {
 		return route()
-			.path("/api/chat", builder ->
+			.path("/api/chat/room", builder ->
 				builder
-					.GET("/room", roomHandler::getAllRoomsHandler)
-					.POST("/room", roomHandler::createNewRoomHandler)
-					.DELETE("/room/{roomId}", roomHandler::deleteRoomHandler)
+					.GET("", roomHandler::getAllRoomsHandler)
+					.POST("", roomHandler::createNewRoomHandler)
+					.DELETE("/{roomId}", roomHandler::deleteRoomHandler)
 			)
 			.build();
 

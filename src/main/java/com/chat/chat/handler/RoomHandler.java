@@ -34,28 +34,6 @@ public class RoomHandler {
 	}
 
 	public Mono<ServerResponse> createNewRoomHandler(ServerRequest request) {
-		log.info("ServerResponse.ok() 호출됨 - 성공 응답을 반환합니다.");
-
-		// return request.bodyToMono(RoomRequest.class)
-		// 	.doOnNext(
-		// 		roomRequest -> System.out.println(
-		// 			"insert" + roomRequest.roomName() + " " + roomRequest.adminMemberId())).
-
-		// return ServerResponse.ok()
-		// 	.contentType(MediaType.APPLICATION_JSON)
-		// 	.bodyValue(roomService.createRooms(request.bodyToMono(RoomRequest.class)))
-		// 	.switchIfEmpty(Mono.error(new ServerWebInputException("Request body cannot be empty.")));
-
-		// return request.bodyToMono(RoomRequest.class)
-		// 	.switchIfEmpty(Mono.error(new ServerWebInputException("Request body cannot be empty.")))
-		// 	.flatMap(roomRequest ->
-		// 		roomService.createRooms(Mono.just(roomRequest))
-		// 			.flatMap(createdRoom -> ServerResponse.ok()
-		// 				.contentType(MediaType.APPLICATION_JSON)
-		// 				.bodyValue(createdRoom)
-		// 			)
-		// 	);
-
 		return request.bodyToMono(RoomRequest.class)
 			.switchIfEmpty(Mono.error(new ServerWebInputException("Request body cannot be empty.")))
 			.flatMap(roomRequest -> roomService.createRooms(Mono.just(roomRequest)))
