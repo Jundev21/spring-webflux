@@ -17,7 +17,7 @@ public class Message {
 	@Id
 	private String id;
 	private String content;
-	private Member sender;
+	private String memberSenderId;
 	private Room chatRoom;
 	@CreatedDate
 	private LocalDate createdDate;

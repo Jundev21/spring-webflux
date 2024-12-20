@@ -20,7 +20,7 @@ public class Room {
 	private String id;
 	private String roomName;
 	private String roomPassword;
-	private Member roomAdmin;
+	private String adminMemberId;
 	private List<Member> groupMembers;
 	@CreatedDate
 	private LocalDate createdDate;
