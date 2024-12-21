@@ -1,6 +1,7 @@
 package com.chat.chat.handler;
 
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -47,7 +48,7 @@ public class RoomHandler {
 	public Mono<ServerResponse> joinRoomHandler(ServerRequest request) {
 		return ServerResponse
 			.ok()
-			.bodyValue(roomService.joinRoom(extractRoomId(request),extractUserId(request)));
+			.body(roomService.joinRoom(extractRoomId(request),extractUserId(request)), ResponseCookie.class);
 	}
 
 	public Mono<ServerResponse> leaveRoomHandler(ServerRequest request) {
@@ -59,7 +60,7 @@ public class RoomHandler {
 	}
 
 	private String extractUserId(ServerRequest request){
-		return request.pathVariable("userId");
+		return request.pathVariable("memberId");
 	}
 
 }
