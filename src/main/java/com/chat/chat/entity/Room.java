@@ -32,4 +32,9 @@ public class Room {
 		this.roomPassword = roomRequest.roomPassword();
 		this.adminMemberId = roomRequest.adminMemberId();
 	}
+
+	public Room addMember(Member member){
+		groupMembers.add(member);
+		return this;
+	}
 }

@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ServerWebInputException;
 
 import com.chat.chat.dto.request.RoomRequest;
+import com.chat.chat.dto.response.AllRoomResponse;
 import com.chat.chat.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,14 +24,12 @@ public class RoomHandler {
 	public Mono<ServerResponse> getAllRoomsHandler(ServerRequest request) {
 		return ServerResponse
 			.ok()
-			.bodyValue("success");
-	}
+			.body(roomService.getAllRooms(), AllRoomResponse.class); 	}
 
 	public Mono<ServerResponse> deleteRoomHandler(ServerRequest request) {
-		long roomId = Long.parseLong(request.pathVariable("roomId"));
 		return ServerResponse
 			.ok()
-			.bodyValue(roomService.deleteRoom());
+			.bodyValue(roomService.deleteRoom(extractRoomId(request)));
 	}
 
 	public Mono<ServerResponse> createNewRoomHandler(ServerRequest request) {
@@ -43,6 +42,24 @@ public class RoomHandler {
 				.bodyValue(createdRoom)
 			);
 
+	}
+
+	public Mono<ServerResponse> joinRoomHandler(ServerRequest request) {
+		return ServerResponse
+			.ok()
+			.bodyValue(roomService.joinRoom(extractRoomId(request),extractUserId(request)));
+	}
+
+	public Mono<ServerResponse> leaveRoomHandler(ServerRequest request) {
+		return  null;
+	}
+
+	private String extractRoomId(ServerRequest request){
+		return request.pathVariable("roomId");
+	}
+
+	private String extractUserId(ServerRequest request){
+		return request.pathVariable("userId");
 	}
 
 }
