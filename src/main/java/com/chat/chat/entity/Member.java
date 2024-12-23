@@ -1,6 +1,6 @@
 package com.chat.chat.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -18,7 +18,10 @@ public class Member {
 	private String memberId;
 	private String memberPassword;
 	@CreatedDate
-	private LocalDate createdDate;
+	private LocalDateTime createdDate;
 
-
+	public Member(String memberId, String memberPassword) {
+		this.memberId = memberId;
+		this.memberPassword = memberPassword;
+	}
 }
