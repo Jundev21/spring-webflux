@@ -9,6 +9,7 @@ import org.springframework.web.server.ServerWebInputException;
 
 import com.chat.chat.dto.request.RoomRequest;
 import com.chat.chat.dto.response.AllRoomResponse;
+import com.chat.chat.dto.response.BasicRoomResponse;
 import com.chat.chat.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,9 @@ public class RoomHandler {
 
 	private final RoomService roomService;
 
+
+	// pageable
+	// https://breezymind.com/spring-boot-reactive-mongodb-basic/
 	public Mono<ServerResponse> getAllRoomsHandler(ServerRequest request) {
 		return ServerResponse
 			.ok()
@@ -30,7 +34,7 @@ public class RoomHandler {
 	public Mono<ServerResponse> deleteRoomHandler(ServerRequest request) {
 		return ServerResponse
 			.ok()
-			.bodyValue(roomService.deleteRoom(extractRoomId(request)));
+			.body(roomService.deleteRoom(extractRoomId(request)), BasicRoomResponse.class);
 	}
 
 	public Mono<ServerResponse> createNewRoomHandler(ServerRequest request) {
@@ -52,7 +56,9 @@ public class RoomHandler {
 	}
 
 	public Mono<ServerResponse> leaveRoomHandler(ServerRequest request) {
-		return  null;
+		return ServerResponse
+			.ok()
+			.body(roomService.leaveRoom(extractRoomId(request),extractUserId(request)), BasicRoomResponse.class);
 	}
 
 	private String extractRoomId(ServerRequest request){
