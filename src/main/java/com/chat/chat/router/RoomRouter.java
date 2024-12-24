@@ -18,6 +18,8 @@ public class RoomRouter {
 				builder
 					.GET("", roomHandler::getAllRoomsHandler)
 					.POST("", roomHandler::createNewRoomHandler)
+					.POST("/join/{roomId}/member/{memberId}", roomHandler::joinRoomHandler)
+					.DELETE("/leave/{roomId}/member/{memberId}", roomHandler::leaveRoomHandler)
 					.DELETE("/{roomId}", roomHandler::deleteRoomHandler)
 			)
 			.build();

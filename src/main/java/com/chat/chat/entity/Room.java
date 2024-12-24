@@ -1,6 +1,7 @@
 package com.chat.chat.entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.annotation.CreatedDate;
@@ -23,7 +24,7 @@ public class Room {
 	private String roomName;
 	private String roomPassword;
 	private String adminMemberId;
-	private List<Member> groupMembers;
+	private List<Member> groupMembers = new ArrayList<>();
 	@CreatedDate
 	private LocalDate createdDate;
 
