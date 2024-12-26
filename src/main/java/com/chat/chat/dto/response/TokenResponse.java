@@ -1,4 +1,5 @@
 package com.chat.chat.dto.response;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

@@ -11,9 +11,9 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Configuration
 public class MemberRouter {
     @Bean
-    public RouterFunction<ServerResponse> memberRouters (MemberHandler memberHandler) {
+    public RouterFunction<ServerResponse> memberRouters(MemberHandler memberHandler) {
         return RouterFunctions
-                .route(RequestPredicates.POST("/api/auth/register"),memberHandler::createNewMemberHandler)
-                .andRoute(RequestPredicates.POST("/api/auth/login"),memberHandler::loginMemberHandler);
+                .route(RequestPredicates.POST("/api/auth/register"), memberHandler::createNewMemberHandler)
+                .andRoute(RequestPredicates.POST("/api/auth/login"), memberHandler::loginMemberHandler);
     }
 }

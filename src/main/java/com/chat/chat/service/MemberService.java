@@ -50,10 +50,10 @@ public class MemberService {
 
     /**
      * 로그인 요청 처리 메서드
-     *
-     *   1. ID 가 DB에 있는지 확인 / 예외 :"User Not Exist" 반환
-     *   2. PW 비교 / 예외 : "ID or Pw Do Not Match" 반환
-     *   로그인 성공 시 JWT 토큰 생성
+     * <p>
+     * 1. ID 가 DB에 있는지 확인 / 예외 :"User Not Exist" 반환
+     * 2. PW 비교 / 예외 : "ID or Pw Do Not Match" 반환
+     * 로그인 성공 시 JWT 토큰 생성
      *
      * @param memberRequestMono {@link Mono} 로그인 데이터
      * @return {@link Mono} 형태로 로그인 처리 결과를 {@link TokenResponse} 반환
@@ -70,9 +70,9 @@ public class MemberService {
                         jwtUtil.generateToken(existingUser.getMemberId())
                                 .flatMap(token -> {
                                     log.info("login token: {}", token);
-                    log.info("login token: {}", token);
-                    return Mono.just(new TokenResponse(existingUser.getMemberId(), token));
-                }));
+                                    log.info("login token: {}", token);
+                                    return Mono.just(new TokenResponse(existingUser.getMemberId(), token));
+                                }));
     }
 
 

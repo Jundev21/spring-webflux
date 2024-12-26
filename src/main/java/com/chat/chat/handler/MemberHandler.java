@@ -55,11 +55,12 @@ public class MemberHandler {
 
     /**
      * 로그인 요청 핸들러 메서드
-     *
+     * <p>
      * 1.클라이언트 로그인 요청을 받고
      * 2.입력데이터 검증
      * 3.서비스 계층에 로그인 처리 위임
      * (success) 회원아이디 , 액세스 토큰 반환
+     *
      * @param request {@link ServerRequest} 객체로, 요청 본문에 회원 로그인 정보 포함
      * @return {@link Mono}가 방출하는 {@link ServerResponse}로, 로그인 처리 결과
      */
@@ -77,8 +78,8 @@ public class MemberHandler {
                                         "accessToken", tokenResponse.getAccessToken()
                                 )
                         )))
-                .onErrorResume(CustomException.class,error->{
-                    log.error("CustomError Exception :{}",error.getMessage());
+                .onErrorResume(CustomException.class, error -> {
+                    log.error("CustomError Exception :{}", error.getMessage());
                     return ServerResponse.badRequest()
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail(error.getMessage()));

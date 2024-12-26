@@ -7,8 +7,6 @@ import com.chat.chat.entity.Member;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface MemberRepository extends ReactiveMongoRepository<Member,String> {
+public interface MemberRepository extends ReactiveMongoRepository<Member, String> {
     Mono<Member> findByMemberId(String MemberId);
-
-
 }
