@@ -56,8 +56,8 @@ public class MemberService {
      *   로그인 성공 시 JWT 토큰 생성
      *
      * @param memberRequestMono {@link Mono} 로그인 데이터
-     * @return {@link Mono} 형태로 로그인 처리 결과를 {@link TokenResponse} 반환합니다.
-     * @throws CustomException 회원이 데이터베이스에 없거나 비밀번호가 일치하지 않을 경우 발생합니다.
+     * @return {@link Mono} 형태로 로그인 처리 결과를 {@link TokenResponse} 반환
+     * @throws CustomException 회원이 데이터베이스에 없거나 비밀번호가 일치하지 않을 경우 발생
      */
     public Mono<TokenResponse> login(Mono<MemberRequest> memberRequestMono) {
         return memberRequestMono
