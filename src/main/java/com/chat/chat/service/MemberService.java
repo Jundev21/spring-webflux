@@ -78,11 +78,13 @@ public class MemberService {
 
     private Mono<Member> existingUserOrNot(MemberRequest req) {
         return memberRepository.findByMemberId(req.getMemberId())
-                .switchIfEmpty(Mono.error(new CustomException("User Not Exist")))
+                .switchIfEmpty(
+                        Mono.error(new CustomException("User Not Exist")))
                 .flatMap(member -> {
                     if (BCrypt.checkpw(req.getMemberPassword(), member.getMemberPassword())) {
                         return Mono.just(member);
                     } else {
+                        log.error("ID or Pw Do Not Match");
                         return Mono.error(new CustomException("ID or Pw Do Not Match."));
                     }
                 });
