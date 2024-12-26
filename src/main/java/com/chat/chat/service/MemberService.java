@@ -20,6 +20,7 @@ public class MemberService {
         return memberRequestMono.flatMap(memberRequest ->
                 checkDuplicateId(memberRequest.getMemberId())
                         .then(Mono.defer(() -> {
+                            //defer -> just
                             Member member = new Member(
                                     memberRequest.getMemberId(),
                                     hashPassword(memberRequest.getMemberPassword()));
@@ -27,8 +28,8 @@ public class MemberService {
                             return memberRepository.save(member);
                         }))
         );
-
     }
+
 
     private Mono<Void> checkDuplicateId(String memberId) {
         return memberRepository.findByMemberId(memberId)
@@ -43,7 +44,33 @@ public class MemberService {
     private String hashPassword(String memberPassword) {
         return BCrypt.hashpw(memberPassword, BCrypt.gensalt());
     }
+
+    // 1. 로그인된 유저 id 가 DB 에 있는지             || exception "User Not Exist"
+    // 2. plainText -> hashPassword -> match     || exception "ID or Pw Do Not Match."
+    public Mono<Member> login(Mono<MemberRequest> memberRequestMono) {
+        return memberRequestMono
+                .flatMap(memberReq -> existingUserOrNot(memberReq))// 방출값 : MemberRequest
+                .doOnNext(existingMember ->
+                {log.info("login memberId: {}", existingMember.getMemberId());});
+    }
+
+
+    private Mono<Member> existingUserOrNot(MemberRequest req) {
+        return memberRepository.findByMemberId(req.getMemberId())
+                .switchIfEmpty(Mono.error(new CustomException("User Not Exist")))
+                .flatMap(member -> {
+                    if (BCrypt.checkpw(req.getMemberPassword(), member.getMemberPassword())) {
+                        return Mono.just(member);
+                    } else {
+                        return Mono.error(new CustomException("ID or Pw Do Not Match."));
+                    }
+                });
+    }
 }
+
+
+
+
 
 
 

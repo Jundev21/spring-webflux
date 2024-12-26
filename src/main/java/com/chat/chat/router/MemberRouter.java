@@ -13,6 +13,7 @@ public class MemberRouter {
     @Bean
     public RouterFunction<ServerResponse> memberRouters (MemberHandler memberHandler) {
         return RouterFunctions
-                .route(RequestPredicates.POST("/api/auth/register"),memberHandler::createNewMemberHandler);
+                .route(RequestPredicates.POST("/api/auth/register"),memberHandler::createNewMemberHandler)
+                .andRoute(RequestPredicates.POST("/api/auth/login"),memberHandler::loginMemberHandler);
     }
 }
