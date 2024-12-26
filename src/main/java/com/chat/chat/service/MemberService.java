@@ -1,7 +1,9 @@
 package com.chat.chat.service;
 
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.util.JwtUtil;
 import com.chat.chat.dto.request.MemberRequest;
+import com.chat.chat.dto.response.TokenResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final JwtUtil jwtUtil;
 
     public Mono<Member> register(Mono<MemberRequest> memberRequestMono) {
         return memberRequestMono.flatMap(memberRequest ->
@@ -45,13 +48,31 @@ public class MemberService {
         return BCrypt.hashpw(memberPassword, BCrypt.gensalt());
     }
 
-    // 1. 로그인된 유저 id 가 DB 에 있는지             || exception "User Not Exist"
-    // 2. plainText -> hashPassword -> match     || exception "ID or Pw Do Not Match."
-    public Mono<Member> login(Mono<MemberRequest> memberRequestMono) {
+    /**
+     * 로그인 요청 처리 메서드
+     *
+     *   1. ID 가 DB에 있는지 확인 / 예외 :"User Not Exist" 반환
+     *   2. PW 비교 / 예외 : "ID or Pw Do Not Match" 반환
+     *   로그인 성공 시 JWT 토큰 생성
+     *
+     * @param memberRequestMono {@link Mono} 로그인 데이터
+     * @return {@link Mono} 형태로 로그인 처리 결과를 {@link TokenResponse} 반환합니다.
+     * @throws CustomException 회원이 데이터베이스에 없거나 비밀번호가 일치하지 않을 경우 발생합니다.
+     */
+    public Mono<TokenResponse> login(Mono<MemberRequest> memberRequestMono) {
         return memberRequestMono
-                .flatMap(memberReq -> existingUserOrNot(memberReq))// 방출값 : MemberRequest
+                .flatMap(memberReq -> existingUserOrNot(memberReq))
                 .doOnNext(existingMember ->
-                {log.info("login memberId: {}", existingMember.getMemberId());});
+                {
+                    log.info("login memberId: {}", existingMember.getMemberId());
+                })
+                .flatMap(existingUser ->
+                        jwtUtil.generateToken(existingUser.getMemberId())
+                                .flatMap(token -> {
+                                    log.info("login token: {}", token);
+                    log.info("login token: {}", token);
+                    return Mono.just(new TokenResponse(existingUser.getMemberId(), token));
+                }));
     }
 
 
