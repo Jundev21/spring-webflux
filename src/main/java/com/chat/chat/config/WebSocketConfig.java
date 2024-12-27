@@ -9,10 +9,7 @@ import org.springframework.web.reactive.HandlerAdapter;
 import org.springframework.web.reactive.HandlerMapping;
 import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.reactive.socket.WebSocketHandler;
-import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter;
-
-import com.chat.chat.handler.CustomWebSocketHandler;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Sinks;
@@ -29,7 +26,7 @@ public class WebSocketConfig {
 	// path 가 /websocket 이면 localhost:8080/websocket 으로 통신됨
 	@Bean
 	public HandlerMapping handlerMapping(WebSocketHandler webSocketHandler) {
-		Map<String, WebSocketHandler> map = Map.of("/notice/{roomId}", webSocketHandler);
+		Map<String, WebSocketHandler> map = Map.of("/realTimeChat/{roomId}", webSocketHandler);
 		return new SimpleUrlHandlerMapping(map, 1);
 	}
 
@@ -43,31 +40,4 @@ public class WebSocketConfig {
 	public Map<String, Sinks.Many<String>> roomSessionMap() {
 		return new HashMap<>();
 	}
-
-	//========================================================================================================================
-	// private final MessageService messageService;
-	// private final ObjectMapper objectMapper;
-	//
-	// @Bean
-	// public Map<String, Sinks.Many<String>> roomSinkMap() {
-	// 	return new ConcurrentHashMap<>();
-	// }
-	//
-	// @Bean
-	// public CustomWebSocketHandler customWebSocketHandler(Map<String, Sinks.Many<String>> roomSinkMap) {
-	// 	return new CustomWebSocketHandler(roomSinkMap, messageService, objectMapper);
-	// }
-	//
-	// @Bean
-	// public HandlerMapping handlerMapping(CustomWebSocketHandler webSocketHandler) {
-	// 	Map<String, WebSocketHandler> map = Map.of("/notice/{roomId}", webSocketHandler);
-	// 	return new SimpleUrlHandlerMapping(map, -1);
-	// }
-	//
-	// @Bean
-	// public HandlerAdapter wsHandlerAdapter() {
-	// 	return new WebSocketHandlerAdapter();
-	// }
-	//========================================================================================================================
-
 }
