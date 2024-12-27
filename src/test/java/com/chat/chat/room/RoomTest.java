@@ -2,28 +2,22 @@ package com.chat.chat.room;
 
 import static org.mockito.Mockito.*;
 
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import com.chat.chat.dto.request.MemberRequest;
 import com.chat.chat.dto.request.RoomRequest;
-import com.chat.chat.dto.response.AllRoomResponse;
 import com.chat.chat.dto.response.BasicRoomResponse;
 import com.chat.chat.dto.response.JoinRoomResponse;
-import com.chat.chat.entity.Member;
+import com.chat.chat.dto.response.RoomListResponse;
 import com.chat.chat.entity.Room;
 import com.chat.chat.handler.RoomHandler;
 import com.chat.chat.router.RoomRouter;
@@ -50,14 +44,14 @@ public class RoomTest {
 	public void setUp() {
 		webTestClient = WebTestClient.bindToApplicationContext(context).build();
 	}
+
 	@Test
 	@DisplayName("모든 채팅방 조회")
 	public void getAllRoomTest() {
 		BasicRoomResponse basicRoomResponse = BasicRoomResponse.basicRoomResponse(
-			new Room(new RoomRequest("test name", "password", "userAdmin_ID")));
+			new Room(new RoomRequest("test name", "password", "userAdmin_ID"), null));
 
-		when(roomService.getAllRooms()).thenReturn(
-			Mono.just(AllRoomResponse.fromAllRoomResponseDto(List.of(basicRoomResponse))));
+		when(roomService.getAllRooms()).thenReturn(null);
 
 		webTestClient.get()
 			.uri("/api/chat/room")
@@ -70,9 +64,9 @@ public class RoomTest {
 	public void createRoomTest() {
 		RoomRequest roomRequest = new RoomRequest("test name", "password", "userAdmin_ID");
 
-		Room savedRoom = new Room(roomRequest);
+		Room savedRoom = new Room(roomRequest, null);
 
-		when(roomService.createRooms(Mockito.any())).thenReturn(Mono.just(savedRoom));
+		when(roomService.createRooms(Mockito.any())).thenReturn(Mono.just(new RoomListResponse("kim", "asdf", null)));
 
 		webTestClient.post()
 			.uri("/api/chat/room")
@@ -91,7 +85,7 @@ public class RoomTest {
 	public void joinRoomTest() {
 		JoinRoomResponse joinRoomResponse = new JoinRoomResponse("test name", "abcde123");
 
-		when(roomService.joinRoom(any(),any())).thenReturn(Mono.just(joinRoomResponse));
+		when(roomService.joinRoom(any(), any())).thenReturn(Mono.just(joinRoomResponse));
 
 		webTestClient.post()
 			.uri("/api/chat/room/join/abcde123/member/vdifj123")
@@ -102,6 +96,20 @@ public class RoomTest {
 			.jsonPath("$.memberId").isEqualTo("abcde123");
 	}
 
+	@Test
+	@DisplayName("사용자는 채팅방 삭제가 가능하다")
+	public void deleteRoomTest() {
+		BasicRoomResponse basicRoomResponse = new BasicRoomResponse("test name", "asdfasdf123");
+		when(roomService.deleteRoom(any())).thenReturn(Mono.just(basicRoomResponse));
+
+		webTestClient.delete()
+			.uri("/api/chat/room/abcde123")
+			.exchange()
+			.expectStatus().isOk()
+			.expectBody()
+			.jsonPath("$.roomName").isEqualTo("test name")
+			.jsonPath("$.adminMemberId").isEqualTo("asdfasdf123");
+	}
 
 }
 
