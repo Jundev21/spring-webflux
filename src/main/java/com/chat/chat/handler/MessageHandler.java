@@ -4,7 +4,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ServerWebInputException;
 
+import com.chat.chat.dto.request.MessageRequest;
+import com.chat.chat.dto.response.BasicRoomResponse;
 import com.chat.chat.service.MessageService;
 
 import lombok.RequiredArgsConstructor;
@@ -16,18 +19,24 @@ public class MessageHandler {
 
 	private final MessageService messageService;
 
-	public Mono<ServerResponse> getAllMessage(ServerRequest request) {
-		return null;
+	public Mono<ServerResponse> getAllChatMessage(ServerRequest request) {
+		return ServerResponse
+			.ok()
+			.body(messageService.getAllChatMessage(extractRoomId(request)), BasicRoomResponse.class);
 	}
 
-	public Mono<ServerResponse> sendMessage(ServerRequest request) {
-		return null;
+	public Mono<ServerResponse> createMessage(ServerRequest request) {
+		return request.bodyToMono(MessageRequest.class)
+			.switchIfEmpty(Mono.error(new ServerWebInputException("Request body cannot be empty.")))
+			.flatMap(messageRequest-> messageService.createMessage(Mono.just(messageRequest)))
+			.flatMap(createdMessage ->
+				ServerResponse.ok()
+					.contentType(MediaType.APPLICATION_JSON)
+					.bodyValue("success")
+			);
 	}
 
-	public Mono<ServerResponse> testMessage(ServerRequest request) {
-
-		return ServerResponse.ok()
-			.contentType(MediaType.APPLICATION_JSON)
-			.bodyValue("success");
+	private String extractRoomId(ServerRequest request){
+		return request.pathVariable("roomId");
 	}
 }

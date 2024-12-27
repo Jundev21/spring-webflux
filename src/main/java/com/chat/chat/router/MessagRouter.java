@@ -16,9 +16,8 @@ public class MessagRouter {
 		return route()
 			.path("/api/chat/message", builder ->
 				builder
-					.GET("/{roomId}", messageHandler::getAllMessage)
-					.POST("/{roomId}", messageHandler::sendMessage)
-					.GET("/test", messageHandler::testMessage)
+					.GET("/room/{roomId}", messageHandler::getAllChatMessage)
+					.POST("", messageHandler::createMessage)
 			).build();
 
 	}

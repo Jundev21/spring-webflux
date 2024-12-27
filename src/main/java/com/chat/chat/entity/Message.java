@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import com.chat.chat.dto.request.MessageRequest;
 
@@ -26,11 +25,12 @@ public class Message {
 	private String id;
 	private String content;
 	private String memberSenderId;
-	private Room chatRoom;
+	private String roomId;
 	@CreatedDate
 	private LocalDate createdDate;
 
 	public Message(MessageRequest messageRequest) {
+		this.roomId = messageRequest.roomId();
 		this.memberSenderId = messageRequest.memberSenderId();
 		this.content = messageRequest.messageContent();
 

@@ -1,26 +1,19 @@
 package com.chat.chat.service;
 
-import static com.chat.chat.dto.response.AllMessageResponse.*;
-
-import java.util.List;
+import static com.chat.chat.dto.response.MessageResponse.*;
 
 import org.springframework.stereotype.Service;
 
 import com.chat.chat.dto.request.MessageRequest;
-import com.chat.chat.dto.response.AllMessageResponse;
 import com.chat.chat.dto.response.MessageResponse;
 import com.chat.chat.entity.Message;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.MessageRepository;
 import com.chat.chat.repository.RoomRepository;
 
-import jdk.jfr.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.EmitterProcessor;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 // WebSocketSession 이 사용되는곳
 // 새로운 이벤트를 등록하기위한 서비스
@@ -34,36 +27,31 @@ public class MessageService {
 	private final MemberRepository memberRepository;
 	private final RoomRepository roomRepository;
 
-	public void createMessage(MessageRequest messageRequest){
-		memberRepository.findById(messageRequest.memberSenderId())
-			.switchIfEmpty(Mono.error(new IllegalArgumentException("없는 사용자")))
-			.flatMap(member -> roomRepository.findById(messageRequest.roomId()))
-			.switchIfEmpty(Mono.error(new IllegalArgumentException("없는 방입니다.")))
-			.map(e -> messageRepository.save(new Message(messageRequest)));
+	public Mono<MessageResponse> createMessage(Mono<MessageRequest> messageRequest){
+		return messageRequest
+			.flatMap(messagesInfo-> roomRepository.findById(messagesInfo.roomId())
+			   .switchIfEmpty(Mono.error(new IllegalArgumentException("없는 방입니다.")))
+			   .flatMap(e-> memberRepository.findByMemberId(messagesInfo.memberSenderId()))
+			   .switchIfEmpty(Mono.error(new IllegalArgumentException("없는 사용자")))
+				.flatMap(e -> messageRepository.save(new Message(messagesInfo))
+					.map(MessageResponse::messageResponse)));
 	}
 
-	// public Mono<AllMessageResponse> getMessagesByRoomId(String roomId){
-	// 	return messageRepository.findAllByRoomId(roomId)  // roomId로 모든 메시지를 조회
-	// 		.flatMap(message ->
-	// 			roomRepository.findById(message.getId())  // 방 이름 조회
-	// 				.flatMap(room ->
-	// 					memberRepository.findById(message.getMemberSenderId())  // 사용자 조회
-	// 						.map(user -> new MessageResponse(
-	// 							user.getMemberId(),        // 사용자 ID
-	// 							message.getContent(),       // 메시지 내용
-	// 							room.getRoomName(),         // 방 이름
-	// 							message.getCreatedDate()    // 생성 날짜
-	// 						))
-	// 				)
-	// 		)
-	// 		.collectList()  // Flux<MessageResponse>를 List<MessageResponse>로 변환
-	// 		.map(AllMessageResponse::new);
-	//
-	// }
+	public void saveLiveMessage(Mono<MessageRequest> messageRequest){
+		messageRequest
+			.flatMap(messagesInfo -> roomRepository.findById(messagesInfo.roomId())
+				.switchIfEmpty(Mono.error(new IllegalArgumentException("없는 방입니다.")))
+				.flatMap(e -> memberRepository.findByMemberId(messagesInfo.memberSenderId()))
+				.switchIfEmpty(Mono.error(new IllegalArgumentException(messagesInfo.memberSenderId() + " 는 없는 사용자 입니다.")))
+				.doOnNext(e-> log.info(messagesInfo.memberSenderId() + "사용자가" + messagesInfo.roomId() + " 방에 메세지 전송 및 저장 하였습니다."))
+				.flatMap(e -> messageRepository.save(new Message(messagesInfo))))
+			.subscribe();
+	}
 
-
-
-
-
+	public Mono<MessageResponse> getAllChatMessage(String roomId) {
+		return messageRepository.findAllByRoomId(roomId)
+			.zipWith(roomRepository.findById(roomId))
+			.map(tuple->messageResponse(tuple.getT1(),tuple.getT2()));
+	}
 
 }
