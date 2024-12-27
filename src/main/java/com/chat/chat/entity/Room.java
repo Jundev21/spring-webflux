@@ -6,9 +6,7 @@ import java.util.List;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import com.chat.chat.dto.request.RoomRequest;
 
@@ -28,9 +26,11 @@ public class Room {
 	@CreatedDate
 	private LocalDate createdDate;
 
-	public Room(RoomRequest roomRequest) {
+	public Room(RoomRequest roomRequest, Member member) {
 		this.roomName = roomRequest.roomName();
 		this.roomPassword = roomRequest.roomPassword();
 		this.adminMemberId = roomRequest.adminMemberId();
+		this.groupMembers.add(member);
 	}
+
 }

@@ -1,4 +1,8 @@
 package com.chat.chat.dto.request;
 
-public class MessageRequest {
+public record MessageRequest(
+	String roomId,
+	String memberSenderId,
+	String messageContent
+) {
 }

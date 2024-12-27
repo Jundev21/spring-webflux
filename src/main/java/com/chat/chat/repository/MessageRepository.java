@@ -5,6 +5,11 @@ import org.springframework.stereotype.Repository;
 
 import com.chat.chat.entity.Message;
 
+import reactor.core.publisher.Mono;
+
 @Repository
-public interface MessageRepository extends ReactiveMongoRepository<Message,String> {
+public interface MessageRepository extends ReactiveMongoRepository<Message, String> {
+
+	Mono<Message> findAllByRoomId(String roomId);
+
 }
