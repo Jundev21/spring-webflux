@@ -44,7 +44,6 @@ public class JwtAuthFilter implements WebFilter {
                 .flatMap(token1 -> chain.filter(exchange))
                 .onErrorResume(e -> {
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                    // vaildateToken 에서 배출하는 CusotmError 를 ResponseUtil 에 담에서 에러를 반환해야함
                     return exchange.getResponse().setComplete();
                 });
 
