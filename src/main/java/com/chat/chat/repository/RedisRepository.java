@@ -1,5 +1,6 @@
 package com.chat.chat.repository;
 
+import com.chat.chat.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -7,6 +8,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 /**
  * redis 도
@@ -56,5 +59,15 @@ public class RedisRepository {
 
     public Mono<Boolean> exists(String key) {
         return redisTemplate.hasKey(key);
+    }
+
+    public Mono<Member> findById(String key) {
+        return redisTemplate.opsForValue().get(key)
+                .map(value -> {
+                    Member member = new Member();
+                    member.setMemberId(key.replace("memberId:", ""));
+                    member.setCreatedDate(LocalDateTime.parse(value));
+                    return member;
+                });
     }
 }

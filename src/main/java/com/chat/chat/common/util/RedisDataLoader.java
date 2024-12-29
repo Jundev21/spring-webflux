@@ -44,6 +44,7 @@ public class RedisDataLoader {
             members.subscribe(member -> {
                 redisRepository.save("memberId:" + member.getMemberId(), member.getMemberId()).subscribe();
                 redisRepository.save("memberPw:" + member.getMemberId(), member.getMemberPassword()).subscribe();
+                redisRepository.save("createdAt:"+member.getMemberId() ,member.getCreatedDate().toString()).subscribe();
             });
 
 

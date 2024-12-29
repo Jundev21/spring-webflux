@@ -3,6 +3,7 @@ package com.chat.chat.service;
 import com.chat.chat.common.exception.CustomException;
 import com.chat.chat.common.util.JwtUtil;
 import com.chat.chat.dto.request.MemberRequest;
+import com.chat.chat.dto.response.MemberResponse;
 import com.chat.chat.dto.response.TokenResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.repository.MemberRepository;
@@ -89,6 +90,8 @@ public class MemberService {
                     }
                 });
     }
+
+
 }
 
 
