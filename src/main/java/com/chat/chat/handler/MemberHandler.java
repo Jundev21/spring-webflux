@@ -22,8 +22,6 @@ public class MemberHandler {
 
     private final MemberService memberService;
 
-    //TODO: 1.HTTP Mappping
-    //      2.ControllerAdvice -> if needed
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
                 .doOnNext(MemberValidator::validate)
@@ -36,14 +34,14 @@ public class MemberHandler {
                                 "User register successfully",
                                 Map.of("memberId", member.getMemberId())
                         )))
-                // CustomException 에서 커버 될 경우 에러 처리..
+
                 .onErrorResume(CustomException.class, error -> {
                     log.error("Custom Exception :{}", error.getMessage());
                     return ServerResponse.badRequest()
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail(error.getMessage()));
                 })
-                // TODO:이 부분은 시간이 있다면 .. controllerAdvice 로 빼면 좋을듯..?
+
                 .onErrorResume(error -> {
                     log.error("Unexpected Exception :{}", error.getMessage());
                     return ServerResponse.status(500)
