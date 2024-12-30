@@ -7,7 +7,7 @@ public class MemberValidator {
     private MemberValidator() {
     }
 
-    public static void validate(MemberRequest memberRequest) {
+    public static void validateForLogin(MemberRequest memberRequest) {
         if (!memberRequest.getMemberId().matches("^[a-zA-Z0-9]{5,15}$")) {
             throw new CustomException("Invalid member id");
         }
@@ -16,4 +16,13 @@ public class MemberValidator {
         }
 
     }
-}
+
+    public static void validateForEdit(MemberRequest memberRequest) {
+        if (!memberRequest.getMemberPassword().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
+            throw new CustomException("Invalid member password");
+        }
+            if (!memberRequest.getMemberNewPassword().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
+                throw new CustomException("Invalid member new password");
+            }
+        }
+    }

@@ -24,10 +24,9 @@ public class MemberHandler {
 
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validate)
+                .doOnNext(MemberValidator::validateForLogin)
                 .doOnNext(memberRequest -> log.info("Received request: {}", memberRequest))
                 .flatMap(MemberRequest -> memberService.register(Mono.just(MemberRequest)))
-                //Mono를 던지지 말고 Member 를 던지는게 나음
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(
@@ -64,7 +63,7 @@ public class MemberHandler {
      */
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validate)
+                .doOnNext(MemberValidator::validateForLogin)
                 .doOnNext(memberRequest -> log.info("Received Request :{}", memberRequest))
                 .flatMap(MemberRequest -> memberService.login(Mono.just(MemberRequest)))
                 .flatMap(tokenResponse -> ServerResponse.ok()

@@ -45,7 +45,7 @@ public class MemberService {
 
     }
 
-    private String hashPassword(String memberPassword) {
+    public static String hashPassword(String memberPassword) {
         return BCrypt.hashpw(memberPassword, BCrypt.gensalt());
     }
 
@@ -90,8 +90,6 @@ public class MemberService {
                     }
                 });
     }
-
-
 }
 
 

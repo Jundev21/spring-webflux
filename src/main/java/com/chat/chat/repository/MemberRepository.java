@@ -9,4 +9,5 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface MemberRepository extends ReactiveMongoRepository<Member, String> {
     Mono<Member> findByMemberId(String MemberId);
+    Mono<Boolean> existsByMemberId(String MemberId);
 }

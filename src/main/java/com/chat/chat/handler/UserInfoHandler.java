@@ -1,7 +1,9 @@
 package com.chat.chat.handler;
 
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.util.MemberValidator;
 import com.chat.chat.common.util.ResponseUtils;
+import com.chat.chat.dto.request.MemberRequest;
 import com.chat.chat.dto.response.MemberResponse;
 import com.chat.chat.service.MemberService;
 import com.chat.chat.service.UserInfoService;
@@ -41,7 +43,7 @@ public class UserInfoHandler {
     return Mono.justOrEmpty(request.attribute("memberId"))
             .cast(String.class)
             .doOnNext(memberId->log.info("memberId:{}",memberId))
-            .flatMap(memberId->userInfoService.getUserInfo(Mono.just(memberId)))
+            .flatMap(memberId->userInfoService.getUserInfo(memberId))
             .flatMap(memberResponse->ServerResponse.ok()
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(ResponseUtils.success("User Info retrieved success",
@@ -65,8 +67,49 @@ public class UserInfoHandler {
 
 
     }
+
+    /**
+     * 원래 비밀 번호를 치고 , newPassword 치는 방식으로
+     * 비밀번호 변경
+     * @param request
+     * @return
+//     */
     public Mono<ServerResponse> editUserInfoHandler(ServerRequest request) {
-        return null;
+    Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class).doOnNext(memberId->log.info("memberId:{}",memberId));
+
+    Mono<MemberRequest> passwordUpdateMono = request.bodyToMono(MemberRequest.class)
+            .doOnNext(MemberValidator::validateForEdit);
+
+    return Mono.zip(memberIdMono,passwordUpdateMono)
+            .flatMap(tuple-> {
+                String memberId = tuple.getT1();
+                MemberRequest memberRequest = tuple.getT2();
+                return userInfoService.updateUserInfo(
+                        memberId,
+                        memberRequest.getMemberPassword(),
+                        memberRequest.getMemberNewPassword()
+                );
+            })
+            .flatMap(member -> ServerResponse.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(ResponseUtils.success("pw update successful",
+                           Map.of("memberId",member.getMemberId())
+                    )))
+
+            .onErrorResume(CustomException.class, error -> {
+                log.error("CustomError Exception :{}", error.getMessage());
+                return ServerResponse.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(ResponseUtils.fail(error.getMessage()));
+            })
+            .onErrorResume(error -> {
+                log.error("Unexpected Exception :{}", error.getMessage());
+                return ServerResponse.status(500)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(ResponseUtils.fail("Internal Server Error"));
+            });
+
+
     }
 
     public Mono<ServerResponse> deleteUserInfoHandler(ServerRequest request) {
