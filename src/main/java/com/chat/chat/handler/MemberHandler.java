@@ -22,28 +22,25 @@ public class MemberHandler {
 
     private final MemberService memberService;
 
-    //TODO: 1.HTTP Mappping
-    //      2.ControllerAdvice -> if needed
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validate)
+                .doOnNext(MemberValidator::validateForLogin)
                 .doOnNext(memberRequest -> log.info("Received request: {}", memberRequest))
                 .flatMap(MemberRequest -> memberService.register(Mono.just(MemberRequest)))
-                //Mono를 던지지 말고 Member 를 던지는게 나음
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(
                                 "User register successfully",
                                 Map.of("memberId", member.getMemberId())
                         )))
-                // CustomException 에서 커버 될 경우 에러 처리..
+
                 .onErrorResume(CustomException.class, error -> {
                     log.error("Custom Exception :{}", error.getMessage());
                     return ServerResponse.badRequest()
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail(error.getMessage()));
                 })
-                // TODO:이 부분은 시간이 있다면 .. controllerAdvice 로 빼면 좋을듯..?
+
                 .onErrorResume(error -> {
                     log.error("Unexpected Exception :{}", error.getMessage());
                     return ServerResponse.status(500)
@@ -66,7 +63,7 @@ public class MemberHandler {
      */
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validate)
+                .doOnNext(MemberValidator::validateForLogin)
                 .doOnNext(memberRequest -> log.info("Received Request :{}", memberRequest))
                 .flatMap(MemberRequest -> memberService.login(Mono.just(MemberRequest)))
                 .flatMap(tokenResponse -> ServerResponse.ok()

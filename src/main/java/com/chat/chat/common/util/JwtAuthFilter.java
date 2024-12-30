@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
  * 1. 필터에 회원가입 , 로그인 엔드 포인트는 제외되야함
  * 2. header 에서 jwt 추출 - header 적절한지
  * 3. validateToken 호출
- * 4. memberId 를 파싱해서 던지면 받을 곳이 있는지 ...? -> 지금은 당장 쓸곳이 없어서 안던지는걸로
+ * 4. memberId 를 클레임에 저장해서 다른 엔트포인트에서 serverRequest 에서 꺼내쓸수 있도록 설계
  */
 @Component
 @RequiredArgsConstructor
@@ -41,11 +41,15 @@ public class JwtAuthFilter implements WebFilter {
 
         String token = header.substring(7);
         return jwtUtil.validateToken(token)
-                .flatMap(token1 -> chain.filter(exchange))
+                .flatMap(claims -> {
+                    String memberId = claims.getSubject();
+                    exchange.getAttributes().put("memberId", memberId);
+                    System.out.println("JWT_memberId:"+ memberId);
+                    return chain.filter(exchange);
+                })
                 .onErrorResume(e -> {
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 });
-
     }
 }
