@@ -32,7 +32,7 @@ public class JwtAuthFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
         if (path.equals("/api/auth/login")||path.equals("/api/auth/register")
-          ||path.equals("/api/chat/room")
+//          ||path.equals("/api/chat/room")
         ) {
 
             return chain.filter(exchange);
