@@ -22,6 +22,7 @@ public class Member {
 	@CreatedDate
 	private LocalDateTime createdDate;
 
+
 	public Member(String memberId, String memberPassword) {
 		this.memberId = memberId;
 		this.memberPassword = memberPassword;

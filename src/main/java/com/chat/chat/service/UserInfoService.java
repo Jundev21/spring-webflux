@@ -95,4 +95,42 @@ public class UserInfoService {
                 });
     }
 
+    /**
+     * 어차피 데이터 베이스를 거쳐야함 다른 컬렉션 때문에 먼저 레디스를 탐색하는것은 무의미 하다고 생각
+     * 추후에 지워지면 수동으로 마지막에 지우는게 좋을 듯 하다
+     */
+
+    public Mono<Void> deleteUserInfo(String memberId, String memberPassword) {
+        return memberRepo.findByMemberId(memberId)
+                .switchIfEmpty(Mono.error(new CustomException("User not found")))
+                .flatMap(member -> {
+
+                    if (!BCrypt.checkpw(memberPassword, member.getMemberPassword())) {
+                        return Mono.error(new CustomException("Invalid password"));
+                    }
+
+                    return memberRepo.delete(member)
+                            .then(customMemberRepo.updateMessageForDeleteUser(memberId))
+                            .then(customMemberRepo.updateRoomForDeleteUser(memberId));
+                }).then(deleteInRedis(memberId));
+    }
+
+    private Mono<Void> deleteInRedis(String memberId) {
+        return redisRepo.exists(memberId)
+                .flatMap(exists -> {
+                    if (exists) {
+                        return redisRepo.deleteMember(memberId)
+                                .flatMap(deleted -> {
+                                    if (deleted) {
+                                        return Mono.empty();
+                                    } else {
+                                        return Mono.error(new CustomException("Failed to delete member in Redis"));
+                                    }
+                                });
+                    } else {
+                        return Mono.empty();
+                    }
+                });
+    }
+
 }

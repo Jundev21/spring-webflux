@@ -9,4 +9,6 @@ public class MemberRequest {
     String memberPassword;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     String memberNewPassword;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String memberPasswordConfirm;
 }
