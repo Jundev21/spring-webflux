@@ -10,14 +10,12 @@ public record RoomListResponse(
 	String adminMemberId,
 	List<BasicMemberResponse> groupMember
 ) {
-
-		public static RoomListResponse roomListResponse(Room room, List<BasicMemberResponse> basicMemberResponses){
-			return new RoomListResponse(
-				room.getRoomName(),
-				room.getAdminMemberId(),
-				basicMemberResponses
-			);
-		}
-
-
+	public static RoomListResponse roomListResponse(Room room, List<BasicMemberResponse> basicMemberResponses) {
+		return new RoomListResponse(
+			room.getRoomName(),
+			room.getAdminMemberId(),
+			basicMemberResponses
+		);
 	}
+
+}
