@@ -3,15 +3,18 @@ import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Message;
 import com.chat.chat.entity.Room;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class CustomMemberRepository {
 
     private final ReactiveMongoTemplate mongoTemplate;
@@ -51,4 +54,14 @@ public class CustomMemberRepository {
         );
 
     }
+
+    public Flux<Room> findRoomsByMemberId(String memberId) {
+        Query query = new Query();
+
+        query.addCriteria(Criteria.where("groupMembers.memberId").is(memberId));
+
+        log.info("쿼리 실행: {}", query);
+        return mongoTemplate.find(query, Room.class);
+    }
+
 }
