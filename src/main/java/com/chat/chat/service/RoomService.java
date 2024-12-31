@@ -3,6 +3,7 @@ package com.chat.chat.service;
 import java.rmi.ServerException;
 import java.util.List;
 
+import com.chat.chat.common.util.MemberValidator;
 import com.chat.chat.repository.CustomMemberRepository;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ public class RoomService {
 	private final RoomRepository roomRepository;
 	private final MemberRepository memberRepository;
 	private final CustomMemberRepository customMemberRepository;
+	private final MemberValidator memberValidator;
 
 	public Mono<List<RoomListResponse>> getAllRooms() {
 		return roomRepository.findAll()
@@ -104,7 +106,7 @@ public class RoomService {
 	}
 
 	public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, String title, int page, int size) {
-	// member는 따로 처리 할예정,,,
+	   // member 필요없음 빼기
 			return customMemberRepository.findRoomsByTitleWithPagination(title, page, size)
 					.map(room -> {
 						List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()

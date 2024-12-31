@@ -1,4 +1,5 @@
 package com.chat.chat.repository;
+
 import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Message;
 import com.chat.chat.entity.Room;
@@ -31,7 +32,7 @@ public class CustomMemberRepository {
         );
     }
 
-    public Mono<Message> updateMessageForDeleteUser(String memberId){
+    public Mono<Message> updateMessageForDeleteUser(String memberId) {
         Query query = Query.query(Criteria.where("memberSenderId").is(memberId));
         Update update = new Update().set("memberSenderId", memberId);
 
@@ -42,7 +43,7 @@ public class CustomMemberRepository {
         );
     }
 
-    public Mono<Room> updateRoomForDeleteUser(String memberId){
+    public Mono<Room> updateRoomForDeleteUser(String memberId) {
         Query query = new Query(Criteria.where("groupMembers.memberId").is(memberId));
 
         Update update = new Update().set("groupMembers.$.memberId", "undefined");
@@ -67,14 +68,13 @@ public class CustomMemberRepository {
 
     public Flux<Room> findRoomsByTitleWithPagination(String title, int page, int size) {
         Query query = new Query();
-        query.addCriteria(Criteria.where("roomName").regex(".*" + title  + ".*", "i"));
+        query.addCriteria(Criteria.where("roomName").regex(".*" + title + ".*", "i"));
         query.skip((long) (page - 1) * size);
         query.limit(size);
         log.info("쿼리 로그 : title={}, page={}, size={}, query={}", title, page, size, query);
         return mongoTemplate.find(query, Room.class);
     }
-
-    }
+}
 
 
 
