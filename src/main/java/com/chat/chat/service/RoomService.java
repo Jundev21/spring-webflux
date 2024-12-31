@@ -14,6 +14,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.util.MemberValidator;
 import com.chat.chat.dto.request.RoomDeleteRequest;
 import com.chat.chat.dto.request.RoomRequest;
 import com.chat.chat.dto.response.BasicMemberResponse;
@@ -22,6 +23,7 @@ import com.chat.chat.dto.response.JoinRoomResponse;
 import com.chat.chat.dto.response.RoomListResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Room;
+import com.chat.chat.repository.CustomMemberRepository;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.RoomRepository;
 
@@ -36,6 +38,8 @@ public class RoomService {
 
 	private final RoomRepository roomRepository;
 	private final MemberRepository memberRepository;
+	private final CustomMemberRepository customMemberRepository;
+	private final MemberValidator memberValidator;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
 	//reactive mongodb pagenation 정보
@@ -125,4 +129,28 @@ public class RoomService {
 		}
 	}
 
+	public Mono<List<RoomListResponse>> getUserAllRooms(String memberId) {
+		return customMemberRepository.findRoomsByMemberId(memberId)
+			.doOnNext(room -> log.info("조회된 방: {}", room))
+			.map(room -> {
+				List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+					.map(BasicMemberResponse::basicMemberResponse)
+					.toList();
+				return RoomListResponse.roomListResponse(room, groupMembers);
+			})
+			.doOnNext(response -> log.info("특정 유저의 방 조회: {}", response))
+			.collectList();
+	}
+
+	public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, String title, int page, int size) {
+		// member 필요없음 빼기
+		return customMemberRepository.findRoomsByTitleWithPagination(title, page, size)
+			.map(room -> {
+				List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+					.map(BasicMemberResponse::basicMemberResponse)
+					.toList();
+				return RoomListResponse.roomListResponse(room, groupMembers);
+			})
+			.collectList();
+	}
 }

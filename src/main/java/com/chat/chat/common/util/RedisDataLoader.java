@@ -37,23 +37,35 @@ public class RedisDataLoader {
 
     @Bean
     public ApplicationRunner loadDataToRedisBeforeServerStart() {
+
         return args -> {
 
             Flux<Member> members = mongoTemplate.findAll(Member.class);
 
-            members.subscribe(member -> {
-                redisRepository.save("memberId:" + member.getMemberId(), member.getMemberId()).subscribe();
-                redisRepository.save("memberPw:" + member.getMemberId(), member.getMemberPassword()).subscribe();
-            });
 
+            members.flatMap(member -> redisRepository.saveMember(
+                    member.getMemberId(),
+                    member.getMemberPassword(),
+                    member.getCreatedDate()
+            )).subscribe(
+                    success -> System.out.println("Member save to Redis: " + success),
+                    error -> System.err.println("Error  Member to Redis: " + error.getMessage())
+            );
 
             Flux<Room> rooms = mongoTemplate.findAll(Room.class);
 
-            rooms.subscribe(room -> {
-                redisRepository.save("roomName:" + room.getRoomName(), room.getRoomName()).subscribe();
-            });
 
-            System.out.println("Redis Load Complete!");
+            rooms.flatMap(room -> redisRepository.updateField(
+                    "roomName:" + room.getRoomName(),
+                    "roomName",
+                    room.getRoomName()
+            )).subscribe(
+                    success -> System.out.println("Room save to Redis: " + success),
+                    error -> System.err.println("Error Room to Redis: " + error.getMessage())
+            );
+
+            System.out.println("레디스 저장 성공");
         };
+
+    };
     }
-}
