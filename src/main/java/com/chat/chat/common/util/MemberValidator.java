@@ -14,9 +14,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class MemberValidator {
 
-    private final RedisRepository redisRepo;
-
-    private final MemberRepository memberRepo;
 
     public static void validateForLogin(MemberRequest memberRequest) {
         if (!memberRequest.getMemberId().matches("^[a-zA-Z0-9]{5,15}$")) {
