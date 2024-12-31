@@ -22,7 +22,11 @@ public class MessageHandler {
 	public Mono<ServerResponse> getAllChatMessage(ServerRequest request) {
 		return ServerResponse
 			.ok()
-			.body(messageService.getAllChatMessage(extractRoomId(request)), BasicRoomResponse.class);
+			.body(messageService.getAllChatMessage(
+				extractRoomId(request),
+				request.queryParam("page").orElse("0"),
+				request.queryParam("size").orElse("10")
+			), BasicRoomResponse.class);
 	}
 
 	public Mono<ServerResponse> createMessage(ServerRequest request) {

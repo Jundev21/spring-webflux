@@ -39,28 +39,28 @@ public class RoomService {
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
 	//reactive mongodb pagenation 정보
-	//https://www.devkuma.com/docs/spring-data-mongo/pagination/
+	// https://www.devkuma.com/docs/spring-data-mongo/pagination/
 	// https://medium.com/@AADota/spring-mongo-template-pagination-92fa93c50d5c
+	// https://gnidinger.tistory.com/entry/WebFluxReactive-MongoDB-%EC%BF%BC%EB%A6%AC-%EC%A0%95%EB%A0%AC-%ED%8E%98%EC%9D%B4%EC%A7%80%EB%84%A4%EC%9D%B4%EC%85%98
 	//pageable 성능최적화
-	//https://junior-datalist.tistory.com/342
+	// https://junior-datalist.tistory.com/342
 	public Mono<Page<RoomListResponse>> getAllRooms(String page, String size) {
 
 		Pageable pageable = PageRequest.of(Integer.parseInt(page), Integer.parseInt(size));
 		Query pageableQuery = new Query().with(pageable);
 
-		Mono<List<Room>> roomsMono = reactiveMongoTemplate.find(pageableQuery, Room.class, "room").collectList();
-		Mono<Long> countMono = reactiveMongoTemplate.count(pageableQuery, Room.class);
+		Mono<List<Room>> roomsMono = reactiveMongoTemplate.find(pageableQuery, Room.class).collectList();
+		Mono<Long> totalElements = reactiveMongoTemplate.count(new Query(), Room.class);
 
-		return Mono.zip(roomsMono, countMono)
+		return Mono.zip(roomsMono, totalElements)
 			.map(tuple -> {
-				List<Room> rooms = tuple.getT1();
-				List<RoomListResponse> responses = rooms.stream()
+				List<RoomListResponse> responses = tuple.getT1().stream()
 					.map(room -> {
 						List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
-							.map(BasicMemberResponse::basicMemberResponse)
-							.toList();
+							.map(BasicMemberResponse::basicMemberResponse).toList();
 						return roomListResponse(room, groupMembers);
 					}).toList();
+				log.info("모든 방이 조회되었습니다.");
 				return PageableExecutionUtils.getPage(responses, pageable, tuple::getT2);
 			});
 	}

@@ -20,16 +20,4 @@ public record MessageResponse(
 			message.getCreatedDate()
 		);
 	}
-
-	public static MessageResponse messageResponse(
-		Message message,
-		Room room
-	) {
-		return new MessageResponse(
-			message.getMemberSenderId(),
-			message.getContent(),
-			room.getRoomName(),
-			message.getCreatedDate()
-		);
-	}
 }
