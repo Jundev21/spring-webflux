@@ -38,7 +38,6 @@ public class RoomService {
 			})
 			.doOnNext(response -> log.info("전체 방 조회"))
 			.collectList();
-
 	}
 
 	public Mono<JoinRoomResponse> joinRoom(String roomId, String userId) {
@@ -104,4 +103,15 @@ public class RoomService {
 				.collectList();
 	}
 
+	public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, String title, int page, int size) {
+	// member는 따로 처리 할예정,,,
+			return customMemberRepository.findRoomsByTitleWithPagination(title, page, size)
+					.map(room -> {
+						List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+								.map(BasicMemberResponse::basicMemberResponse)
+								.toList();
+						return RoomListResponse.roomListResponse(room, groupMembers);
+					})
+					.collectList();
+		}
 }

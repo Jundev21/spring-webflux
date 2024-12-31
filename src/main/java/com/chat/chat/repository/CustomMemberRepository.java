@@ -64,4 +64,17 @@ public class CustomMemberRepository {
         return mongoTemplate.find(query, Room.class);
     }
 
-}
+
+    public Flux<Room> findRoomsByTitleWithPagination(String title, int page, int size) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("roomName").regex(".*" + title  + ".*", "i"));
+        query.skip((long) (page - 1) * size);
+        query.limit(size);
+        log.info("쿼리 로그 : title={}, page={}, size={}, query={}", title, page, size, query);
+        return mongoTemplate.find(query, Room.class);
+    }
+
+    }
+
+
+
