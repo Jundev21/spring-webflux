@@ -3,6 +3,8 @@ package com.chat.chat.service;
 import java.rmi.ServerException;
 import java.util.List;
 
+import com.chat.chat.common.util.MemberValidator;
+import com.chat.chat.repository.CustomMemberRepository;
 import org.springframework.stereotype.Service;
 
 import com.chat.chat.dto.request.RoomRequest;
@@ -25,6 +27,8 @@ public class RoomService {
 
 	private final RoomRepository roomRepository;
 	private final MemberRepository memberRepository;
+	private final CustomMemberRepository customMemberRepository;
+	private final MemberValidator memberValidator;
 
 	public Mono<List<RoomListResponse>> getAllRooms() {
 		return roomRepository.findAll()
@@ -36,7 +40,6 @@ public class RoomService {
 			})
 			.doOnNext(response -> log.info("전체 방 조회"))
 			.collectList();
-
 	}
 
 	public Mono<JoinRoomResponse> joinRoom(String roomId, String userId) {
@@ -89,4 +92,28 @@ public class RoomService {
 			.switchIfEmpty(Mono.error(new ServerException("존재하지않는 방입니다.")));
 	}
 
+	public Mono<List<RoomListResponse>> getUserAllRooms(String memberId) {
+		return customMemberRepository.findRoomsByMemberId(memberId)
+				.doOnNext(room -> log.info("조회된 방: {}", room))
+				.map(room -> {
+					List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+							.map(BasicMemberResponse::basicMemberResponse)
+							.toList();
+					return RoomListResponse.roomListResponse(room, groupMembers);
+				})
+				.doOnNext(response -> log.info("특정 유저의 방 조회: {}", response))
+				.collectList();
+	}
+
+	public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, String title, int page, int size) {
+	   // member 필요없음 빼기
+			return customMemberRepository.findRoomsByTitleWithPagination(title, page, size)
+					.map(room -> {
+						List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+								.map(BasicMemberResponse::basicMemberResponse)
+								.toList();
+						return RoomListResponse.roomListResponse(room, groupMembers);
+					})
+					.collectList();
+		}
 }
