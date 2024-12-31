@@ -1,12 +1,24 @@
 package com.chat.chat.service;
 
-import static com.chat.chat.dto.response.MessageResponse.*;
+import static com.chat.chat.common.error.ErrorTypes.*;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
+import com.chat.chat.common.exception.CustomException;
 import com.chat.chat.dto.request.MessageRequest;
 import com.chat.chat.dto.response.MessageResponse;
+import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Message;
+import com.chat.chat.entity.Room;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.MessageRepository;
 import com.chat.chat.repository.RoomRepository;
@@ -26,32 +38,54 @@ public class MessageService {
 	private final MessageRepository messageRepository;
 	private final MemberRepository memberRepository;
 	private final RoomRepository roomRepository;
+	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
-	public Mono<MessageResponse> createMessage(Mono<MessageRequest> messageRequest){
+	public Mono<MessageResponse> createMessage(Mono<MessageRequest> messageRequest) {
 		return messageRequest
-			.flatMap(messagesInfo-> roomRepository.findById(messagesInfo.roomId())
-			   .switchIfEmpty(Mono.error(new IllegalArgumentException("없는 방입니다.")))
-			   .flatMap(e-> memberRepository.findByMemberId(messagesInfo.memberSenderId()))
-			   .switchIfEmpty(Mono.error(new IllegalArgumentException("없는 사용자")))
-				.flatMap(e -> messageRepository.save(new Message(messagesInfo))
-					.map(MessageResponse::messageResponse)));
+			.flatMap(messagesInfo ->
+				isExistRoom(messagesInfo.roomId())
+					.flatMap(e ->
+						isExistMember(messagesInfo.memberSenderId()))
+					.flatMap(e -> messageRepository.save(new Message(messagesInfo))
+						.map(MessageResponse::messageResponse))
+			);
 	}
 
-	public void saveLiveMessage(Mono<MessageRequest> messageRequest){
+	public void saveLiveMessage(Mono<MessageRequest> messageRequest) {
 		messageRequest
-			.flatMap(messagesInfo -> roomRepository.findById(messagesInfo.roomId())
-				.switchIfEmpty(Mono.error(new IllegalArgumentException("없는 방입니다.")))
-				.flatMap(e -> memberRepository.findByMemberId(messagesInfo.memberSenderId()))
-				.switchIfEmpty(Mono.error(new IllegalArgumentException(messagesInfo.memberSenderId() + " 는 없는 사용자 입니다.")))
-				.doOnNext(e-> log.info(messagesInfo.memberSenderId() + "사용자가" + messagesInfo.roomId() + " 방에 메세지 전송 및 저장 하였습니다."))
+			.flatMap(messagesInfo -> isExistRoom(messagesInfo.roomId())
+				.flatMap(e -> isExistMember(messagesInfo.memberSenderId()))
+				.doOnNext(e -> log.info(
+					messagesInfo.memberSenderId() + "가" + messagesInfo.roomId() + " 방에 메세지 전송 및 저장 하였습니다."))
 				.flatMap(e -> messageRepository.save(new Message(messagesInfo))))
 			.subscribe();
 	}
 
-	public Mono<MessageResponse> getAllChatMessage(String roomId) {
-		return messageRepository.findAllByRoomId(roomId)
-			.zipWith(roomRepository.findById(roomId))
-			.map(tuple->messageResponse(tuple.getT1(),tuple.getT2()));
+	public Mono<Page<MessageResponse>> getAllChatMessage(String roomId, String page, String size) {
+
+		Pageable pageable = PageRequest.of(Integer.parseInt(page), Integer.parseInt(size));
+		Query pageQuery = new Query(Criteria.where("roomId").is(roomId)).with(pageable);
+		Mono<List<Message>> messagesMono = reactiveMongoTemplate.find(pageQuery, Message.class).collectList();
+		Mono<Long> totalElements = reactiveMongoTemplate.count(new Query(), Message.class);
+
+		return Mono.zip(messagesMono, totalElements)
+			.map(messageTotalTuple -> {
+				List<Message> messages = messageTotalTuple.getT1();
+				List<MessageResponse> messageResponse =
+					messages.stream().map(MessageResponse::messageResponse).toList();
+				log.info("모든 메세지가 조회되었습니다.");
+				return PageableExecutionUtils.getPage(messageResponse, pageable, messageTotalTuple::getT2);
+			});
+	}
+
+	public Mono<Room> isExistRoom(String roomId) {
+		return roomRepository.findById(roomId)
+			.switchIfEmpty(Mono.error(new CustomException(NOT_EXIST_ROOM.errorMessage)));
+	}
+
+	public Mono<Member> isExistMember(String userId) {
+		return memberRepository.findByMemberId(userId)
+			.switchIfEmpty(Mono.error(new CustomException(NOT_EXIST_MEMBER.errorMessage)));
 	}
 
 }

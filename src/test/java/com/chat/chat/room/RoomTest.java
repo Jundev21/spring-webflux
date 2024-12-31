@@ -51,7 +51,7 @@ public class RoomTest {
 		BasicRoomResponse basicRoomResponse = BasicRoomResponse.basicRoomResponse(
 			new Room(new RoomRequest("test name", "password", "userAdmin_ID"), null));
 
-		when(roomService.getAllRooms()).thenReturn(null);
+		when(roomService.getAllRooms("0","10")).thenReturn(null);
 
 		webTestClient.get()
 			.uri("/api/chat/room")
@@ -100,7 +100,7 @@ public class RoomTest {
 	@DisplayName("사용자는 채팅방 삭제가 가능하다")
 	public void deleteRoomTest() {
 		BasicRoomResponse basicRoomResponse = new BasicRoomResponse("test name", "asdfasdf123");
-		when(roomService.deleteRoom(any())).thenReturn(Mono.just(basicRoomResponse));
+		when(roomService.deleteRoom(any(),any())).thenReturn(Mono.just(basicRoomResponse));
 
 		webTestClient.delete()
 			.uri("/api/chat/room/abcde123")
