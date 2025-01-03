@@ -22,6 +22,9 @@ public class MemberHandler {
 
     private final MemberService memberService;
 
+    // Todo : memberRequest 객체를 새로 만드는게 나은지 .. 아니면 json inculde 로 사용해도 괜찮은지
+    // Todo : AdviceController 생성해서 handler 간단하게 만들기
+
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
                 .flatMap(memberRequest ->
@@ -51,20 +54,25 @@ public class MemberHandler {
                 }));
     }
 
-    /**
-     * 로그인 요청 핸들러 메서드
-     * <p>
-     * 1.클라이언트 로그인 요청을 받고
-     * 2.입력데이터 검증
-     * 3.서비스 계층에 로그인 처리 위임
-     * (success) 회원아이디 , 액세스 토큰 반환
-     *
-     * @param request {@link ServerRequest} 객체로, 요청 본문에 회원 로그인 정보 포함
-     * @return {@link Mono}가 방출하는 {@link ServerResponse}로, 로그인 처리 결과
-     */
+
+    //TODO : 1. handler -> service Mono 로 던지는게 아니라 .. 그 자체 request 로 던질것...
+    //TODO : 2. errorhandle => controllerAvice 로 전역적으로 관리하기
+
+
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
+
                 .doOnNext(MemberValidator::validateForLogin)
+        /**
+         * doOnNext 로 하면 Mono<Void> validateFroLogin 결과 값을 받아오지 못함 그 이유는 ?
+         *
+         * doOnNext 는 사이드 이펙트를 처리하기 위한 연산자임 .. 즉 내부에서 실행된 작업은 결과를 체인으로 전달하지 않음
+         * Mono<Void>는 실제로 체인에 영향을 미치지 않고 doOnNext 이후의 스트림에는 여전히 원래의 MemberRequest 가 흐르게 됌
+         * validateForLogin 은 Mono<Void> 를 반환하지만 doOnNext 는 반환된 Mono<Void>를 체인에 반영하지 않음
+         * 1. doOnNext는 스트림데이터(MemberRequest)를 소비하지만 , 결과적으로 데이터는 변경되지 않음
+         * 2. validateForLogin 에서 반환된 Mono<Void>는 doOnNext 내부에서 단순히 무시됌
+         */
+
                 .doOnNext(memberRequest -> log.info("Received Request :{}", memberRequest))
                 .flatMap(MemberRequest -> memberService.login(Mono.just(MemberRequest)))
                 .flatMap(tokenResponse -> ServerResponse.ok()

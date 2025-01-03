@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 /**
- * Id 조건 : 소문자, 대문자, 숫자로만 구성된 5~15자의 문자열
- * Pw 조건 : 대문자 최소 1개, 숫자 최소 1개를 포함한 8자 이상의 문자열
+ * Id 조건설정 : 소문자, 대문자, 숫자로만 구성된 5~15자의 문자열
+ * Pw 조건설정 : 대문자 최소 1개, 숫자 최소 1개를 포함한 8자 이상의 문자열
  */
 
 @Component

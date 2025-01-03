@@ -48,20 +48,21 @@ public class RedisDataLoader {
                     member.getMemberPassword(),
                     member.getCreatedDate()
             )).subscribe(
-                    success -> System.out.println("Member save to Redis: " + success),
-                    error -> System.err.println("Error  Member to Redis: " + error.getMessage())
+                    success -> System.out.println("Member 레디스에 저장: " + success),
+                    error -> System.err.println("Error ! Member 레디스에 실패: " + error.getMessage())
             );
 
             Flux<Room> rooms = mongoTemplate.findAll(Room.class);
 
+    // TODO : 현재 room save 안되고 있음 확인 required
 
             rooms.flatMap(room -> redisRepository.updateField(
                     "roomName:" + room.getRoomName(),
                     "roomName",
                     room.getRoomName()
             )).subscribe(
-                    success -> System.out.println("Room save to Redis: " + success),
-                    error -> System.err.println("Error Room to Redis: " + error.getMessage())
+                    success -> System.out.println("Room 레디스에 저장: " + success),
+                    error -> System.err.println("Error ! Room 레디스 실패 : " + error.getMessage())
             );
 
             System.out.println("레디스 저장 성공");
