@@ -1,15 +1,14 @@
 package com.chat.chat.dto.response;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.chat.chat.entity.Message;
-import com.chat.chat.entity.Room;
 
 public record MessageResponse(
 	String memberId,
 	String content,
 	String roomName,
-	LocalDate createdDate
+	LocalDateTime createdDate
 ) {
 
 	public static MessageResponse messageResponse(Message message) {
@@ -17,7 +16,7 @@ public record MessageResponse(
 			message.getMemberSenderId(),
 			message.getContent(),
 			message.getRoomId(),
-			message.getCreatedDate()
+			message.getLocalDateTime()
 		);
 	}
 }
