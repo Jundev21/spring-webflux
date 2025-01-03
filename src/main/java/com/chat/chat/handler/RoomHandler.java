@@ -41,11 +41,13 @@ public class RoomHandler {
 
 	public Mono<ServerResponse> deleteRoomHandler(ServerRequest request) {
 
+
 		return request.bodyToMono(RoomDeleteRequest.class)
 			.switchIfEmpty(Mono.error(new CustomException(ErrorTypes.EMPTY_REQUEST.errorMessage)))
 			.flatMap(roomRequest -> roomService.deleteRoom(request.pathVariable("roomId"), roomRequest))
 			.flatMap(deletedRoom -> ServerResponse.ok()
 				.body(deletedRoom, BasicRoomResponse.class));
+
 	}
 
 	public Mono<ServerResponse> createNewRoomHandler(ServerRequest request) {

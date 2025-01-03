@@ -24,9 +24,10 @@ public class MemberHandler {
 
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validateForLogin)
-                .doOnNext(memberRequest -> log.info("Received request: {}", memberRequest))
-                .flatMap(MemberRequest -> memberService.register(Mono.just(MemberRequest)))
+                .flatMap(memberRequest ->
+                        MemberValidator.validateForLogin(memberRequest).then(Mono.just(memberRequest)))
+                .doOnNext(memberRequest -> log.info("요청받은 객체 , memberNewPassword , memberPasswordConfirm 이 null 이여야 정상: {}", memberRequest))
+                .flatMap(MemberRequest -> memberService.register(MemberRequest)
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(
@@ -47,7 +48,7 @@ public class MemberHandler {
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail("Internal Server Error"));
 
-                });
+                }));
     }
 
     /**

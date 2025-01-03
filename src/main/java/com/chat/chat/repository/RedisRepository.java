@@ -24,7 +24,7 @@ public class RedisRepository {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
 
-    // 저장
+
     public Mono<Boolean> saveMember(String memberId, String password, LocalDateTime createdAt) {
         return redisTemplate.opsForHash().putAll("member:" + memberId, Map.of(
                 "password", password,
