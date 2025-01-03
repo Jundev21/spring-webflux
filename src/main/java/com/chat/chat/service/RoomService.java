@@ -1,6 +1,6 @@
 package com.chat.chat.service;
 
-import static com.chat.chat.common.error.ErrorTypes.*;
+import static com.chat.chat.common.responseEnums.ErrorTypes.*;
 import static com.chat.chat.dto.response.RoomListResponse.*;
 
 import java.util.List;
@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
@@ -70,47 +71,54 @@ public class RoomService {
 	}
 
 	public Mono<JoinRoomResponse> joinRoom(String roomId, String userId) {
-		return isExistRoom(roomId)
-			.flatMap(e -> roomRepository.joinRoomMember(roomId, userId))
-			.doOnNext(e -> log.info(userId + " 가 " + roomId + " 에 입장하셨습니다."))
-			.flatMap(updatedRoom -> roomRepository.findById(roomId))
-			.map(room -> new JoinRoomResponse(room.getRoomName(), userId));
+		return isAlreadyJoinedMember(roomId, userId)
+			.then(
+				Mono.zip(isExistRoom(roomId), isExistMember(userId))
+					.flatMap(roomMember -> roomRepository.joinRoomMember(roomMember.getT1().getId(),
+						roomMember.getT2()))
+					.doOnNext(e -> log.info(userId + " 가 " + roomId + " 에 입장하셨습니다."))
+					.flatMap(isUpdated -> roomRepository.findById(roomId))
+					.map(room -> new JoinRoomResponse(room.getRoomName(), userId)));
 	}
 
 	public Mono<BasicRoomResponse> deleteRoom(String roomId, RoomDeleteRequest deleteRequest) {
-		return
-			isExistRoom(roomId)
-				.doOnNext(room -> checkPassword(room.getRoomPassword(), deleteRequest.password()))
-				.flatMap(room ->
-					roomRepository.delete(room)
+		return isExistRoom(roomId)
+			.flatMap(room ->
+				checkPassword(room.getRoomPassword(), deleteRequest.password())
+					.then(roomRepository.delete(room)
+						.doOnNext(e -> log.info("방 " + room.getRoomName() + " 가 삭제되었습니다."))
 						.thenReturn(BasicRoomResponse.basicRoomResponse(room)))
-				.doOnNext(e -> log.info(e.roomName() + " 가 삭제되었습니다."));
+			);
 
 	}
 
-	public Mono<RoomListResponse> createRooms(Mono<RoomRequest> roomRequest) {
-		return roomRequest.flatMap(roomData ->
-				isExistMember(roomData.adminMemberId())
-					.flatMap(memberInfo ->
-						roomRepository.save(new Room(roomData, memberInfo))
-							.flatMap(savedRoom -> {
-								List<BasicMemberResponse> groupMembers = savedRoom.getGroupMembers().stream()
-									.map(BasicMemberResponse::basicMemberResponse)
-									.toList();
-								return Mono.just(roomListResponse(savedRoom, groupMembers));
-							})
-					)
-			)
-			.doOnNext(room -> log.info("방" + room.roomName() + " 이 생성되었습니다."));
+	public Mono<RoomListResponse> createRooms(RoomRequest roomRequest) {
+		return Mono.just(roomRequest)
+			.flatMap(roomData ->
+				isDuplicatedRoom(roomData.roomName())
+					.then(
+						isExistMember(roomData.adminMemberId())
+							.flatMap(memberInfo ->
+								roomRepository.save(new Room(roomData, memberInfo))
+									.flatMap(savedRoom -> {
+										List<BasicMemberResponse> groupMembers = savedRoom.getGroupMembers().stream()
+											.map(BasicMemberResponse::basicMemberResponse)
+											.toList();
+										log.info("방" + savedRoom.getRoomName() + " 이 생성되었습니다.");
+										return Mono.just(roomListResponse(savedRoom, groupMembers));
+									})
+							))
+			);
 	}
 
 	public Mono<BasicRoomResponse> leaveRoom(String roomId, String userId) {
-		return
-			isExistRoom(roomId)
-				.flatMap(e -> roomRepository.removeRoomMember(roomId, userId))
-				.doOnNext(room -> log.info(userId + "님이" + roomId + "방에서 나가셨습니다."))
-				.flatMap(updatedRoom -> roomRepository.findById(roomId))
-				.map(BasicRoomResponse::basicRoomResponse);
+		return isJoinedMember(roomId, userId)
+			.then(
+				isExistRoom(roomId)
+					.flatMap(e -> roomRepository.removeRoomMember(roomId, userId))
+					.doOnNext(room -> log.info(userId + "님이" + roomId + "방에서 나가셨습니다."))
+					.flatMap(updatedRoom -> roomRepository.findById(roomId))
+					.map(BasicRoomResponse::basicRoomResponse));
 	}
 
 	public Mono<Room> isExistRoom(String roomId) {
@@ -119,14 +127,46 @@ public class RoomService {
 	}
 
 	public Mono<Member> isExistMember(String userId) {
-		return memberRepository.findById(userId)
+		return memberRepository.findByMemberId(userId)
 			.switchIfEmpty(Mono.error(new CustomException(NOT_EXIST_MEMBER.errorMessage)));
 	}
 
-	private void checkPassword(String originPass, String requestPass) {
+	public Mono<Void> isDuplicatedRoom(String roomName) {
+		return roomRepository.existsByRoomName(roomName)
+			.flatMap(isFound -> {
+				if (isFound) {
+					return Mono.error(new CustomException(ALREADY_EXIST_ROOM.errorMessage));
+				}
+				return Mono.empty();
+			});
+	}
+
+	public Mono<Void> isJoinedMember(String roomId, String memberId) {
+		Query findJoinedMember = new Query(Criteria.where("id").is(roomId)
+			.and("groupMembers").elemMatch(Criteria.where("memberId").is(memberId)));
+		Mono<Room> findMember = reactiveMongoTemplate.findOne(findJoinedMember, Room.class);
+
+		return findMember
+			.switchIfEmpty(Mono.error(new CustomException(NOT_JOINED_MEMBER.errorMessage)))
+			.then();
+	}
+
+	public Mono<Void> isAlreadyJoinedMember(String roomId, String memberId) {
+		Query findJoinedMember = new Query(Criteria.where("id").is(roomId)
+			.and("groupMembers").elemMatch(Criteria.where("memberId").is(memberId)));
+		Mono<Room> findMember = reactiveMongoTemplate.findOne(findJoinedMember, Room.class);
+
+		return findMember
+			.flatMap(member -> Mono.error(new CustomException(ALREADY_JOINED_ROOM.errorMessage)))
+			.then();
+	}
+
+	private Mono<Void> checkPassword(String originPass, String requestPass) {
+		log.info(originPass + " checking password " + requestPass);
 		if (!originPass.equals(requestPass)) {
-			Mono.error(new CustomException(NOT_VALID_PASSWORD.errorMessage));
+			return Mono.error(new CustomException(NOT_VALID_PASSWORD.errorMessage));
 		}
+		return Mono.empty();
 	}
 
 	public Mono<List<RoomListResponse>> getUserAllRooms(String memberId) {
