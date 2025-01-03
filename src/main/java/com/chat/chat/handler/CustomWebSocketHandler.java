@@ -8,6 +8,7 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.util.UriTemplate;
 
 import com.chat.chat.dto.request.MessageRequest;
+import com.chat.chat.dto.request.SocketRequest;
 import com.chat.chat.service.MessageService;
 import com.chat.chat.service.RoomService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,7 +33,6 @@ public class CustomWebSocketHandler implements WebSocketHandler {
 	public Mono<Void> handle(WebSocketSession session) {
 		return Mono.just(extractRoomId(session))
 			.flatMap(roomService::isExistRoom)
-			.switchIfEmpty(Mono.error(new IllegalArgumentException("방 못찾음: ")))
 			.flatMap(room -> {
 				// 각 방에있는곳에 메세지 스트림에 구독
 				roomSinkMap.putIfAbsent(room.getId(), Sinks.many().multicast().directBestEffort());
@@ -42,9 +42,9 @@ public class CustomWebSocketHandler implements WebSocketHandler {
 				session.receive()
 					.doOnNext(message -> {
 						try {
-							MessageRequest messageRequest = objectMapper.readValue(message.getPayloadAsText(),
-								MessageRequest.class);
-							messageService.saveLiveMessage(Mono.just(messageRequest));
+							SocketRequest socketRequest = objectMapper.readValue(message.getPayloadAsText(),
+								SocketRequest.class);
+							messageService.saveLiveMessage(MessageRequest.messageRequest(room.getId(), socketRequest));
 						} catch (JsonProcessingException e) {
 							throw new RuntimeException(e);
 						}

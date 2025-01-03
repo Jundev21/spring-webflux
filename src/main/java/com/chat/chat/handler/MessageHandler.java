@@ -1,13 +1,16 @@
 package com.chat.chat.handler;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.server.ServerWebInputException;
 
+import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.responseEnums.ErrorTypes;
+import com.chat.chat.common.responseEnums.SuccessTypes;
+import com.chat.chat.common.util.ResponseUtils;
 import com.chat.chat.dto.request.MessageRequest;
-import com.chat.chat.dto.response.BasicRoomResponse;
+import com.chat.chat.dto.response.ApiResponse;
 import com.chat.chat.service.MessageService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,27 +23,34 @@ public class MessageHandler {
 	private final MessageService messageService;
 
 	public Mono<ServerResponse> getAllChatMessage(ServerRequest request) {
-		return ServerResponse
-			.ok()
-			.body(messageService.getAllChatMessage(
+		return messageService.getAllChatMessage(
 				extractRoomId(request),
 				request.queryParam("page").orElse("0"),
-				request.queryParam("size").orElse("10")
-			), BasicRoomResponse.class);
+				request.queryParam("size").orElse("10"))
+			.map(result -> ResponseUtils.success(SuccessTypes.GET_ALL_Messages.successMessage, result))
+			.flatMap(result -> ServerResponse.ok()
+				.body(Mono.just(result), ApiResponse.class))
+			.onErrorResume(error ->
+				ServerResponse.badRequest()
+					.body(Mono.just(ResponseUtils.failNoBody(error.getMessage(), HttpStatus.BAD_REQUEST)),
+						ApiResponse.class));
 	}
 
 	public Mono<ServerResponse> createMessage(ServerRequest request) {
 		return request.bodyToMono(MessageRequest.class)
-			.switchIfEmpty(Mono.error(new ServerWebInputException("Request body cannot be empty.")))
-			.flatMap(messageRequest-> messageService.createMessage(Mono.just(messageRequest)))
-			.flatMap(createdMessage ->
-				ServerResponse.ok()
-					.contentType(MediaType.APPLICATION_JSON)
-					.bodyValue("success")
-			);
+			.switchIfEmpty(Mono.error(new CustomException(ErrorTypes.EMPTY_REQUEST.errorMessage)))
+			.flatMap(messageService::createMessage)
+			.map(result -> ResponseUtils.success(SuccessTypes.CREATE_MESSAGES.successMessage, result))
+			.flatMap(result -> ServerResponse.ok()
+				.body(Mono.just(result), ApiResponse.class)
+			)
+			.onErrorResume(error ->
+				ServerResponse.badRequest()
+					.body(Mono.just(ResponseUtils.failNoBody(error.getMessage(), HttpStatus.BAD_REQUEST)),
+						ApiResponse.class));
 	}
 
-	private String extractRoomId(ServerRequest request){
+	private String extractRoomId(ServerRequest request) {
 		return request.pathVariable("roomId");
 	}
 }

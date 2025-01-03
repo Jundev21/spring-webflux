@@ -1,6 +1,6 @@
 package com.chat.chat.service;
 
-import static com.chat.chat.common.error.ErrorTypes.*;
+import static com.chat.chat.common.responseEnums.ErrorTypes.*;
 
 import java.util.List;
 
@@ -40,23 +40,23 @@ public class MessageService {
 	private final RoomRepository roomRepository;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
-	public Mono<MessageResponse> createMessage(Mono<MessageRequest> messageRequest) {
-		return messageRequest
-			.flatMap(messagesInfo ->
-				isExistRoom(messagesInfo.roomId())
-					.flatMap(e ->
-						isExistMember(messagesInfo.memberSenderId()))
-					.flatMap(e -> messageRepository.save(new Message(messagesInfo))
-						.map(MessageResponse::messageResponse))
-			);
+	public Mono<MessageResponse> createMessage(MessageRequest messageRequest) {
+		return Mono.just(messageRequest)
+			.flatMap(messagesInfo -> isExistRoom(messagesInfo.roomId())
+				.flatMap(e -> isExistMember(messagesInfo.memberSenderId()))
+				.flatMap(e -> messageRepository.save(new Message(messagesInfo))
+					.map(MessageResponse::messageResponse))
+			)
+			.doOnNext(e -> log.info(
+				messageRequest.roomId() + "방 에서 " + messageRequest.memberSenderId() + " 님이 메세지를 생성했습니다."));
 	}
 
-	public void saveLiveMessage(Mono<MessageRequest> messageRequest) {
-		messageRequest
+	public void saveLiveMessage(MessageRequest messageRequest) {
+		Mono.just(messageRequest)
 			.flatMap(messagesInfo -> isExistRoom(messagesInfo.roomId())
 				.flatMap(e -> isExistMember(messagesInfo.memberSenderId()))
 				.doOnNext(e -> log.info(
-					messagesInfo.memberSenderId() + "가" + messagesInfo.roomId() + " 방에 메세지 전송 및 저장 하였습니다."))
+					messagesInfo.memberSenderId() + " 님이 " + messagesInfo.roomId() + " 방에 메세지 전송 및 저장 하였습니다."))
 				.flatMap(e -> messageRepository.save(new Message(messagesInfo))))
 			.subscribe();
 	}
@@ -68,14 +68,16 @@ public class MessageService {
 		Mono<List<Message>> messagesMono = reactiveMongoTemplate.find(pageQuery, Message.class).collectList();
 		Mono<Long> totalElements = reactiveMongoTemplate.count(new Query(), Message.class);
 
-		return Mono.zip(messagesMono, totalElements)
-			.map(messageTotalTuple -> {
-				List<Message> messages = messageTotalTuple.getT1();
-				List<MessageResponse> messageResponse =
-					messages.stream().map(MessageResponse::messageResponse).toList();
-				log.info("모든 메세지가 조회되었습니다.");
-				return PageableExecutionUtils.getPage(messageResponse, pageable, messageTotalTuple::getT2);
-			});
+		return isExistRoom(roomId)
+			.flatMap(passed ->
+				Mono.zip(messagesMono, totalElements)
+					.map(messageTotalTuple -> {
+						List<Message> messages = messageTotalTuple.getT1();
+						List<MessageResponse> messageResponse =
+							messages.stream().map(MessageResponse::messageResponse).toList();
+						log.info(roomId + "의 모든 메세지가 조회되었습니다.");
+						return PageableExecutionUtils.getPage(messageResponse, pageable, messageTotalTuple::getT2);
+					}));
 	}
 
 	public Mono<Room> isExistRoom(String roomId) {
