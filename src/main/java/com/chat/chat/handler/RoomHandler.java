@@ -57,7 +57,7 @@ public class RoomHandler {
 	public Mono<ServerResponse> createNewRoomHandler(ServerRequest request) {
 		return request.bodyToMono(RoomRequest.class)
 			.switchIfEmpty(Mono.error(new CustomException(ErrorTypes.EMPTY_REQUEST.errorMessage)))
-			.flatMap(roomService::createRooms)
+			.flatMap(roomInfo-> roomService.createRooms(roomInfo, extractMemberInfo(request)))
 			.flatMap(createdRoom ->
 				ServerResponse.ok().body(
 					Mono.just(ResponseUtils.success(SuccessTypes.CREATE_ROOMS.successMessage, createdRoom)), ApiResponse.class
@@ -69,7 +69,7 @@ public class RoomHandler {
 	}
 
 	public Mono<ServerResponse> joinRoomHandler(ServerRequest request) {
-		return roomService.joinRoom(request.pathVariable("roomId"), request.pathVariable("memberId"))
+		return roomService.joinRoom(request.pathVariable("roomId"), extractMemberInfo(request))
 			.map(result -> ResponseUtils.success(SuccessTypes.JOIN_ROOMS.successMessage,result))
 			.flatMap(response ->
 				ServerResponse.ok()
@@ -82,7 +82,7 @@ public class RoomHandler {
 	}
 
 	public Mono<ServerResponse> leaveRoomHandler(ServerRequest request) {
-		return roomService.leaveRoom(request.pathVariable("roomId"), request.pathVariable("memberId"))
+		return roomService.leaveRoom(request.pathVariable("roomId"), extractMemberInfo(request))
 			.map(result -> ResponseUtils.success(SuccessTypes.LEAVE_ROOMS.successMessage, result))
 			.flatMap(response ->
 				ServerResponse.ok()
@@ -140,5 +140,9 @@ public class RoomHandler {
 				.contentType(MediaType.APPLICATION_JSON)
 				.bodyValue(rooms));
 
+	}
+
+	private String extractMemberInfo(ServerRequest request){
+		return request.exchange().getAttribute("memberId");
 	}
 }

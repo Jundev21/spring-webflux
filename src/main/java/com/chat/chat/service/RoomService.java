@@ -40,7 +40,6 @@ public class RoomService {
 	private final RoomRepository roomRepository;
 	private final MemberRepository memberRepository;
 	private final CustomMemberRepository customMemberRepository;
-	private final MemberValidator memberValidator;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
 	//reactive mongodb pagenation 정보
@@ -50,7 +49,6 @@ public class RoomService {
 	//pageable 성능최적화
 	// https://junior-datalist.tistory.com/342
 	public Mono<Page<RoomListResponse>> getAllRooms(String page, String size) {
-
 		Pageable pageable = PageRequest.of(Integer.parseInt(page), Integer.parseInt(size));
 		Query pageableQuery = new Query().with(pageable);
 
@@ -70,15 +68,15 @@ public class RoomService {
 			});
 	}
 
-	public Mono<JoinRoomResponse> joinRoom(String roomId, String userId) {
-		return isAlreadyJoinedMember(roomId, userId)
+	public Mono<JoinRoomResponse> joinRoom(String roomId, String memberId) {
+		return isAlreadyJoinedMember(roomId, memberId)
 			.then(
-				Mono.zip(isExistRoom(roomId), isExistMember(userId))
+				Mono.zip(isExistRoom(roomId), isExistMember(memberId))
 					.flatMap(roomMember -> roomRepository.joinRoomMember(roomMember.getT1().getId(),
 						roomMember.getT2()))
-					.doOnNext(e -> log.info(userId + " 가 " + roomId + " 에 입장하셨습니다."))
+					.doOnNext(e -> log.info(memberId + " 가 " + roomId + " 에 입장하셨습니다."))
 					.flatMap(isUpdated -> roomRepository.findById(roomId))
-					.map(room -> new JoinRoomResponse(room.getRoomName(), userId)));
+					.map(room -> new JoinRoomResponse(room.getRoomName(), memberId)));
 	}
 
 	public Mono<BasicRoomResponse> deleteRoom(String roomId, RoomDeleteRequest deleteRequest) {
@@ -89,15 +87,14 @@ public class RoomService {
 						.doOnNext(e -> log.info("방 " + room.getRoomName() + " 가 삭제되었습니다."))
 						.thenReturn(BasicRoomResponse.basicRoomResponse(room)))
 			);
-
 	}
 
-	public Mono<RoomListResponse> createRooms(RoomRequest roomRequest) {
+	public Mono<RoomListResponse> createRooms(RoomRequest roomRequest, String memberId) {
 		return Mono.just(roomRequest)
 			.flatMap(roomData ->
 				isDuplicatedRoom(roomData.roomName())
 					.then(
-						isExistMember(roomData.adminMemberId())
+						isExistMember(memberId)
 							.flatMap(memberInfo ->
 								roomRepository.save(new Room(roomData, memberInfo))
 									.flatMap(savedRoom -> {
@@ -121,17 +118,17 @@ public class RoomService {
 					.map(BasicRoomResponse::basicRoomResponse));
 	}
 
-	public Mono<Room> isExistRoom(String roomId) {
+	private Mono<Room> isExistRoom(String roomId) {
 		return roomRepository.findById(roomId)
 			.switchIfEmpty(Mono.error(new CustomException(NOT_EXIST_ROOM.errorMessage)));
 	}
 
-	public Mono<Member> isExistMember(String userId) {
+	private Mono<Member> isExistMember(String userId) {
 		return memberRepository.findByMemberId(userId)
 			.switchIfEmpty(Mono.error(new CustomException(NOT_EXIST_MEMBER.errorMessage)));
 	}
 
-	public Mono<Void> isDuplicatedRoom(String roomName) {
+	private Mono<Void> isDuplicatedRoom(String roomName) {
 		return roomRepository.existsByRoomName(roomName)
 			.flatMap(isFound -> {
 				if (isFound) {
@@ -151,7 +148,7 @@ public class RoomService {
 			.then();
 	}
 
-	public Mono<Void> isAlreadyJoinedMember(String roomId, String memberId) {
+	private Mono<Void> isAlreadyJoinedMember(String roomId, String memberId) {
 		Query findJoinedMember = new Query(Criteria.where("id").is(roomId)
 			.and("groupMembers").elemMatch(Criteria.where("memberId").is(memberId)));
 		Mono<Room> findMember = reactiveMongoTemplate.findOne(findJoinedMember, Room.class);

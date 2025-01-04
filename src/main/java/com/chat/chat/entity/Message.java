@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.chat.chat.dto.request.LiveMessageRequest;
 import com.chat.chat.dto.request.MessageRequest;
 
 import lombok.AllArgsConstructor;
@@ -29,9 +30,17 @@ public class Message {
 	@CreatedDate
 	private LocalDateTime localDateTime;
 
-	public Message(MessageRequest messageRequest) {
+	public Message(MessageRequest messageRequest, String senderId) {
 		this.roomId = messageRequest.roomId();
-		this.memberSenderId = messageRequest.memberSenderId();
+		this.memberSenderId = senderId;
 		this.content = messageRequest.messageContent();
+		this.localDateTime = LocalDateTime.now();
+	}
+
+	public Message(String roomId, LiveMessageRequest liveMessageRequest, String senderId) {
+		this.roomId = roomId;
+		this.memberSenderId = senderId;
+		this.content = liveMessageRequest.messageContent();
+		this.localDateTime = LocalDateTime.now();
 	}
 }

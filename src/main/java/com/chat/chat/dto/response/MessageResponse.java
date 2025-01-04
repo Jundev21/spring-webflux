@@ -7,7 +7,7 @@ import com.chat.chat.entity.Message;
 public record MessageResponse(
 	String memberId,
 	String content,
-	String roomName,
+	String roomId,
 	LocalDateTime createdDate
 ) {
 
