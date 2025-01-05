@@ -25,6 +25,7 @@ import com.chat.chat.dto.response.RoomListResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Room;
 import com.chat.chat.repository.CustomMemberRepository;
+import com.chat.chat.repository.CustomRoomRepository;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.RoomRepository;
 
@@ -40,6 +41,7 @@ public class RoomService {
 	private final RoomRepository roomRepository;
 	private final MemberRepository memberRepository;
 	private final CustomMemberRepository customMemberRepository;
+	private final CustomRoomRepository customRoomRepository;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
 	//reactive mongodb pagenation 정보
@@ -50,10 +52,8 @@ public class RoomService {
 	// https://junior-datalist.tistory.com/342
 	public Mono<Page<RoomListResponse>> getAllRooms(String page, String size) {
 		Pageable pageable = PageRequest.of(Integer.parseInt(page), Integer.parseInt(size));
-		Query pageableQuery = new Query().with(pageable);
-
-		Mono<List<Room>> roomsMono = reactiveMongoTemplate.find(pageableQuery, Room.class).collectList();
-		Mono<Long> totalElements = reactiveMongoTemplate.count(new Query(), Room.class);
+		Mono<List<Room>> roomsMono = customRoomRepository.findAllRoomWithPageNation(pageable);
+		Mono<Long> totalElements = customRoomRepository.countAllRooms();
 
 		return Mono.zip(roomsMono, totalElements)
 			.map(tuple -> {
@@ -139,21 +139,13 @@ public class RoomService {
 	}
 
 	public Mono<Void> isJoinedMember(String roomId, String memberId) {
-		Query findJoinedMember = new Query(Criteria.where("id").is(roomId)
-			.and("groupMembers").elemMatch(Criteria.where("memberId").is(memberId)));
-		Mono<Room> findMember = reactiveMongoTemplate.findOne(findJoinedMember, Room.class);
-
-		return findMember
+		return customRoomRepository.findJoinedMember(roomId, memberId)
 			.switchIfEmpty(Mono.error(new CustomException(NOT_JOINED_MEMBER.errorMessage)))
 			.then();
 	}
 
 	private Mono<Void> isAlreadyJoinedMember(String roomId, String memberId) {
-		Query findJoinedMember = new Query(Criteria.where("id").is(roomId)
-			.and("groupMembers").elemMatch(Criteria.where("memberId").is(memberId)));
-		Mono<Room> findMember = reactiveMongoTemplate.findOne(findJoinedMember, Room.class);
-
-		return findMember
+		return customRoomRepository.findJoinedMember(roomId, memberId)
 			.flatMap(member -> Mono.error(new CustomException(ALREADY_JOINED_ROOM.errorMessage)))
 			.then();
 	}
