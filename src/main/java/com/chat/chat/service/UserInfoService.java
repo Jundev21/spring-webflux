@@ -2,21 +2,17 @@ package com.chat.chat.service;
 
 import com.chat.chat.common.exception.CustomException;
 import com.chat.chat.common.responseEnums.ErrorTypes;
-import com.chat.chat.dto.request.MemberRequest;
 import com.chat.chat.dto.response.MemberResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.repository.CustomMemberRepository;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.RepositorySelector;
 import com.chat.chat.repository.redis.RedisMemberRepository;
-import com.chat.chat.repository.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
-import static com.chat.chat.service.MemberService.hashPassword;
 
 @Service
 @RequiredArgsConstructor

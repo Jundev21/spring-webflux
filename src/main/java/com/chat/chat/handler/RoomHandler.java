@@ -106,7 +106,6 @@ public class RoomHandler {
 			.flatMap(userAllRooms -> ServerResponse.ok().
 				contentType(MediaType.APPLICATION_JSON).
 				bodyValue(userAllRooms))
-
 			.onErrorResume(CustomException.class, error -> {
 				log.error("CustomError Exception :{}", error.getMessage());
 				return ServerResponse.badRequest()

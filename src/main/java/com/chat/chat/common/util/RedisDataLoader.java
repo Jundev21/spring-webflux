@@ -1,10 +1,7 @@
 package com.chat.chat.common.util;
 
 import com.chat.chat.entity.Member;
-import com.chat.chat.entity.Room;
 import com.chat.chat.repository.redis.RedisMemberRepository;
-import com.chat.chat.repository.redis.RedisRepository;
-import com.chat.chat.repository.redis.RedisRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +34,7 @@ public class RedisDataLoader {
 
     private final RedisMemberRepository redisMemberRepository;
     private final ReactiveMongoTemplate mongoTemplate;
-    private final RedisRepository redisRepository;
+
 
     @Bean
     public ApplicationRunner loadDataToRedisBeforeServerStart() {
@@ -57,15 +54,6 @@ public class RedisDataLoader {
                     .subscribe();
 
             // Rooms 데이터를 Redis로 로드
-            Flux<Room> rooms = mongoTemplate.findAll(Room.class);
-            rooms.flatMap(room -> redisRepository.updateField(
-                            "room:" + room.getRoomName(), // Room의 Key 형식
-                            "roomName",                  // Redis의 필드
-                            room.getRoomName()           // Room 이름 값 저장
-                    ))
-                    .doOnNext(success -> logger.info("Room 레디스에 저장 성공: {}", success))
-                    .doOnError(error -> logger.error("Room 레디스 저장 실패: {}", error.getMessage()))
-                    .subscribe();
 
             logger.info("Redis 데이터 로드 작업 완료.");
         };
