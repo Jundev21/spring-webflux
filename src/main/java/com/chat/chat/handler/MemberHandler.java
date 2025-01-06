@@ -61,20 +61,10 @@ public class MemberHandler {
 
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-
-                .doOnNext(MemberValidator::validateForLogin)
-        /**
-         * doOnNext 로 하면 Mono<Void> validateFroLogin 결과 값을 받아오지 못함 그 이유는 ?
-         *
-         * doOnNext 는 사이드 이펙트를 처리하기 위한 연산자임 .. 즉 내부에서 실행된 작업은 결과를 체인으로 전달하지 않음
-         * Mono<Void>는 실제로 체인에 영향을 미치지 않고 doOnNext 이후의 스트림에는 여전히 원래의 MemberRequest 가 흐르게 됌
-         * validateForLogin 은 Mono<Void> 를 반환하지만 doOnNext 는 반환된 Mono<Void>를 체인에 반영하지 않음
-         * 1. doOnNext는 스트림데이터(MemberRequest)를 소비하지만 , 결과적으로 데이터는 변경되지 않음
-         * 2. validateForLogin 에서 반환된 Mono<Void>는 doOnNext 내부에서 단순히 무시됌
-         */
-
-                .doOnNext(memberRequest -> log.info("Received Request :{}", memberRequest))
-                .flatMap(MemberRequest -> memberService.login(Mono.just(MemberRequest)))
+                .flatMap(memberRequest ->
+                        MemberValidator.validateForLogin(memberRequest).then(Mono.just(memberRequest)))
+                .doOnNext(memberRequest -> log.info("요청받은 객체 , memberNewPassword , memberPasswordConfirm 이 null 이여야 정상: :{}", memberRequest))
+                .flatMap(MemberRequest -> memberService.login(MemberRequest))
                 .flatMap(tokenResponse -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(

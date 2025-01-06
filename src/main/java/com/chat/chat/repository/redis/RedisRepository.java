@@ -1,5 +1,4 @@
-package com.chat.chat.repository;
-
+package com.chat.chat.repository.redis;
 import com.chat.chat.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -24,7 +23,7 @@ public class RedisRepository {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
 
-
+    // 저장
     public Mono<Boolean> saveMember(String memberId, String password, LocalDateTime createdAt) {
         return redisTemplate.opsForHash().putAll("member:" + memberId, Map.of(
                 "password", password,
@@ -74,4 +73,3 @@ public class RedisRepository {
         return redisTemplate.hasKey("member:" + memberId);
     }
 }
-
