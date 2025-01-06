@@ -1,22 +1,24 @@
 package com.chat.chat.common.util;
 
-import com.chat.chat.common.exception.CustomException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+
+import com.chat.chat.common.exception.CustomException;
+
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 /**
- *
  * a:(ServerWebExchange)
  * = 요청 데이터 {http method, Path, header(authorization, content-type),본문(json ,xml)}
  * = 응답 데이터 {초기 상태는 빈상태}
- *
+ * <p>
  * b:(WebFilterChain) 다음 필터 또는 핸들러로 요청을 넘기기 위한 다리
- *
+ * <p>
  * 1. 필터에 회원가입 , 로그인 엔드 포인트는 제외되야함
  * 2. header 에서 jwt 추출 - header 적절한지
  * 3. validateToken 호출
@@ -26,34 +28,39 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class JwtAuthFilter implements WebFilter {
 
-    private final JwtUtil jwtUtil;
+	private final JwtUtil jwtUtil;
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
-        if (path.equals("/api/auth/login")||path.equals("/api/auth/register")
-//          ||path.equals("/api/chat/room")
-        ) {
-            return chain.filter(exchange);
-        }
+	@Override
+	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+		String path = exchange.getRequest().getURI().getPath();
+		if (path.equals("/api/auth/login")
+			|| path.equals("/api/auth/register")
+			|| path.equals("/users")
+			|| path.equals("/search")
+			|| path.contains("v3") || path.contains("swagger")
+			|| (path.equals("/api/chat/room")
+			&& HttpMethod.GET.equals(exchange.getRequest().getMethod()))
+		) {
+			return chain.filter(exchange);
+		}
 
-        String header = exchange.getRequest().getHeaders().getFirst("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) {
-            return Mono.error(new CustomException("header is not valid"));
-        }
 
+		String header = exchange.getRequest().getHeaders().getFirst("Authorization");
+		if (header == null || !header.startsWith("Bearer ")) {
+			return Mono.error(new CustomException("header is not valid"));
+		}
 
-        String token = header.substring(7);
-        return jwtUtil.validateToken(token)
-                .flatMap(claims -> {
-                    String memberId = claims.getSubject();
-                    exchange.getAttributes().put("memberId", memberId);
-                    System.out.println("JWT_memberId:"+ memberId);
-                    return chain.filter(exchange);
-                })
-                .onErrorResume(e -> {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                    return exchange.getResponse().setComplete();
-                });
-    }
+		String token = header.substring(7);
+		return jwtUtil.validateToken(token)
+			.flatMap(claims -> {
+				String memberId = claims.getSubject();
+				exchange.getAttributes().put("memberId", memberId);
+				System.out.println("JWT_memberId:" + memberId);
+				return chain.filter(exchange);
+			})
+			.onErrorResume(e -> {
+				exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+				return exchange.getResponse().setComplete();
+			});
+	}
 }
