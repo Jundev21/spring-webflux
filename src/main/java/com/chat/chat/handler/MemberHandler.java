@@ -1,6 +1,7 @@
 package com.chat.chat.handler;
 
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.responseEnums.SuccessTypes;
 import com.chat.chat.common.util.MemberValidator;
 import com.chat.chat.common.util.ResponseUtils;
 import com.chat.chat.dto.request.MemberRequest;
@@ -22,8 +23,7 @@ public class MemberHandler {
 
     private final MemberService memberService;
 
-    // Todo : memberRequest 객체를 새로 만드는게 나은지 .. 아니면 json inculde 로 사용해도 괜찮은지
-    // Todo : AdviceController 생성해서 handler 간단하게 만들기
+
 
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
@@ -33,8 +33,7 @@ public class MemberHandler {
                 .flatMap(MemberRequest -> memberService.register(MemberRequest)
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success(
-                                "User register successfully",
+                        .bodyValue(ResponseUtils.success(SuccessTypes.USER_REGISTER_SUCCESSFULLY.successMessage,
                                 Map.of("memberId", member.getMemberId())
                         )))
                 )
@@ -54,8 +53,7 @@ public class MemberHandler {
     }
 
 
-    //TODO : 1. handler -> service Mono 로 던지는게 아니라 .. 그 자체 request 로 던질것...
-    //TODO : 2. errorhandle => controllerAvice 로 전역적으로 관리하기
+
 
 
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
@@ -66,8 +64,7 @@ public class MemberHandler {
                 .flatMap(MemberRequest -> memberService.login(MemberRequest))
                 .flatMap(tokenResponse -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success(
-                                "User login successfully",
+                        .bodyValue(ResponseUtils.success(SuccessTypes.USER_LOGIN_SUCCESSFULLY.successMessage,
                                 Map.of(
                                         "memberId", tokenResponse.getMemberId(),
                                         "accessToken", tokenResponse.getAccessToken()

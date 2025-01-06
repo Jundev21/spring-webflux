@@ -56,12 +56,14 @@ public class CustomMemberRepository {
 
     }
 
-    public Flux<Room> findRoomsByMemberId(String memberId) {
+    public Flux<Room> findRoomsByMemberIdWithPagination(String memberId , int page , int size) {
         Query query = new Query();
 
         query.addCriteria(Criteria.where("groupMembers.memberId").is(memberId));
+        query.skip((long) (page - 1) * size);
+        query.limit(size);
 
-        log.info("쿼리 실행: {}", query);
+        log.info("쿼리 로그 : memberId={}, page={}, size={}", memberId, page, size);
         return mongoTemplate.find(query, Room.class);
     }
 

@@ -1,6 +1,8 @@
 package com.chat.chat.handler;
 
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.responseEnums.ErrorTypes;
+import com.chat.chat.common.responseEnums.SuccessTypes;
 import com.chat.chat.common.util.MemberValidator;
 import com.chat.chat.common.util.ResponseUtils;
 import com.chat.chat.dto.request.MemberRequest;
@@ -42,14 +44,12 @@ public class UserInfoHandler {
     public Mono<ServerResponse> retrievedUserInfoHandler(ServerRequest request) {
         return Mono.justOrEmpty(request.attribute("memberId"))
                 .cast(String.class)
+                .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)))
                 .doOnNext(memberId -> log.info("memberId:{}", memberId))
                 .flatMap(memberId -> userInfoService.getUserInfo(memberId))
                 .flatMap(memberResponse -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success("User Info retrieved success",
-                                Map.of("memberId", memberResponse.getMemberId(),
-                                        "createdAt", memberResponse.getCreateTime().toString())))
-
+                        .bodyValue(ResponseUtils.success(SuccessTypes.USER_INFO_RETRIEVED_SUCCESSFULLY.successMessage,memberResponse)))
                         .onErrorResume(CustomException.class, error -> {
                             log.error("CustomError Exception :{}", error.getMessage());
                             return ServerResponse.badRequest()
@@ -61,7 +61,7 @@ public class UserInfoHandler {
                             return ServerResponse.status(500)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .bodyValue(ResponseUtils.fail("Internal Server Error"));
-                        }));
+                        });
 
 
     }
@@ -74,11 +74,12 @@ public class UserInfoHandler {
      * @return //
      */
     public Mono<ServerResponse> editUserInfoHandler(ServerRequest request) {
-        Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class).doOnNext(memberId -> log.info("memberId:{}", memberId));
+
+        Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class).doOnNext(memberId -> log.info("memberId:{}", memberId))
+         .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)));
 
         Mono<MemberRequest> passwordUpdateMono = request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validateForEdit);
-
+                .flatMap(req -> MemberValidator.validateForEdit(req).thenReturn(req));
         return Mono.zip(memberIdMono, passwordUpdateMono)
                 .flatMap(tuple -> {
                     String memberId = tuple.getT1();
@@ -91,7 +92,7 @@ public class UserInfoHandler {
                 })
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success("pw update successful",
+                        .bodyValue(ResponseUtils.success(SuccessTypes.USER_PW_UPDATE_SUCCESSFULLY.successMessage,
                                 Map.of("memberId", member.getMemberId())
                         )))
 
@@ -121,7 +122,7 @@ public class UserInfoHandler {
         Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class).doOnNext(memberId -> log.info("memberId:{}", memberId));
 
         Mono<MemberRequest> password = request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validateForDelete);
+                .flatMap(req -> MemberValidator.validateForDelete(req).thenReturn(req));
 
 
         return Mono.zip(memberIdMono, password)
@@ -136,7 +137,7 @@ public class UserInfoHandler {
                 })
                 .flatMap(hello->ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success("delete ok",hello)))
+                        .bodyValue(ResponseUtils.success(SuccessTypes.DELETE_SUCCESS.successMessage,null)))
 
                 .onErrorResume(CustomException.class, error -> {
                     log.error("CustomError Exception :{}", error.getMessage());
