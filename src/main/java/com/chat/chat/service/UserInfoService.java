@@ -33,98 +33,65 @@ public class UserInfoService {
                 .flatMap(repo->repo.findMemberById(memberId))
                 .flatMap(member -> {
                     MemberResponse memberResponse = new MemberResponse();
-                    memberResponse.setMemberId(member.getId());
+                    memberResponse.setMemberId(member.getMemberId());
                     memberResponse.setCreateTime(member.getCreatedDate());
                     return Mono.just(memberResponse);
                 });
     }
 
 
-//    public Mono<MemberResponse> getUserInfo(String memberId) {
-//        return redisRepo.exists(memberId)
-//                .flatMap(exists -> {
-//                    if (exists) {
-//                        return redisRepo.findMemberById(memberId)
-//                                .flatMap(memberData -> {
-//                                    MemberResponse response = new MemberResponse();
-//                                    response.setMemberId(memberData.getMemberId());
-//                                    response.setCreateTime(memberData.getCreatedDate());
-//                                    return Mono.just(response);
-//                                });
-//                    } else {
-//                        return memberRepo.findByMemberId(memberId)
-//                                .flatMap(memberData -> {
-//                                    MemberResponse response = new MemberResponse();
-//                                    response.setMemberId(memberData.getMemberId());
-//                                    response.setCreateTime(memberData.getCreatedDate());
-//                                    return Mono.just(response);
-//                                }).switchIfEmpty(Mono.error(new CustomException("Member not found")));
-//                    }
-//                });
-//    }
 
     /**
      * 레디스에 id 있는가? -> 없다 -> 데이터 베이스 탐색 -> 비밀 번호는 맞는가? -> 변경 -> 데이터 베이스 변경후 -> 레디스 업데이트
+     * -> 없데이트 안됌 삭제하고 다시 저장하기 선택함
      * - 있다
      * 비밀 번호는 맞는가? ->틀림 -> 에러
      * -맞다 -> 레디스 변경 -> 데이터베이스 변경
      */
     public Mono<Member> updateUserInfo(String memberId, String password, String newPassword) {
-        String hashPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        String hashNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
 
         return repoSelector.selectRepo(memberId)
                 .flatMap(repo -> repo.findMemberById(memberId))
                 .flatMap(member -> {
+
                     if (BCrypt.checkpw(password, member.getMemberPassword())) {
-                        return customMemberRepo.updateMemberPassword(member.getId(), hashPassword)
-                                .then(redisMemberRepo.updateField(memberId, password, newPassword))
-                                .then(Mono.just(member));
+                        log.info("비밀번호가 일치");
+
+
+                        return customMemberRepo.updateMemberPassword(member.getMemberId(), hashNewPassword)
+                                .flatMap(updateResult -> {
+                                    return redisMemberRepo.deleteMember(memberId)
+                                            .flatMap(deleteResult -> {
+                                                if (deleteResult) {
+                                                    log.info("Redis 삭제 성공: memberId {}", memberId);
+                                                    member.setMemberPassword(hashNewPassword);
+                                                    return redisMemberRepo.saveMember(member)
+                                                            .flatMap(saveResult -> {
+                                                                if (saveResult) {
+                                                                    log.info("Redis 저장 성공: memberId {}", memberId);
+                                                                    return Mono.just(member);
+                                                                } else {
+                                                                    log.error("Redis 저장 실패: memberId {}", memberId);
+                                                                    return Mono.error(new CustomException(ErrorTypes.REDIS_SAVE_FAILED.errorMessage));
+                                                                }
+                                                            });
+                                                } else {
+                                                    log.error("Redis 삭제 실패: memberId {}", memberId);
+                                                    return Mono.error(new CustomException(ErrorTypes.REDIS_DELETE_FAILED.errorMessage));
+                                                }
+                                            });
+                                });
                     } else {
-                        log.error("비밀번호가 일치하지 않습니다");
+                        log.error("현재 비밀번호가 일치하지 않습니다");
                         return Mono.error(new CustomException(ErrorTypes.NOT_VALID_MEMBER_PASSWORD.errorMessage));
                     }
                 });
     }
 
 
-//    public Mono<Member> updateUserInfo(String memberId, String memberPw, String memberNewPw) {
-//        String hashNewPw = hashPassword(memberNewPw);
-//        return redisRepo.exists(memberId)
-//                .flatMap(exist -> {
-//                    if (exist) {
-//                        // 현재 레디스에 아이디가 있음
-//                        // 원래 비밀번호랑 비교 -> 다르면 (error)
-//                        return redisRepo.findPasswordByMemberId(memberId)
-//                                .flatMap(redisPw -> {
-//                                    if (BCrypt.checkpw(memberPw, redisPw)) {
-//                                        // 일치 -> 새로운 비번을 레디스와 데이터베이스에 넣기
-//                                        return redisRepo.updateField(memberId, memberPw, hashNewPw)
-//                                                .then(customMemberRepo.updateMemberPassword(memberId, hashNewPw));
-//                                    } else {
-//                                        log.error("Password Incorrect");
-//                                        return Mono.error(new CustomException("Password Incorrect"));
-//                                    }
-//                                });
-//                    } else {
-//                        // 레디스에 아직 반영이 안된 경우
-//                        return memberRepo.existsByMemberId(memberId)
-//                                .flatMap(exist2 -> {
-//                                    if (exist2) {
-//                                        return memberRepo.findByMemberId(memberId)
-//                                                .flatMap(dataPw -> {
-//                                                    if (BCrypt.checkpw(memberPw, dataPw.getMemberPassword())) {
-//                                                        return customMemberRepo.updateMemberPassword(memberId, hashNewPw);
-//                                                    } else {
-//                                                        return Mono.error(new CustomException("Password Incorrect"));
-//                                                    }
-//                                                });
-//                                    } else {
-//                                        return Mono.error(new CustomException("User not found"));
-//                                    }
-//                                });
-//                    }
-//                });
-//    }
+
+
 
     /**
      * 어차피 데이터 베이스를 거쳐야함 다른 컬렉션 때문에 먼저 레디스를 탐색하는것은 무의미 하다고 생각

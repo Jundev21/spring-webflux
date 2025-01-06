@@ -39,22 +39,24 @@ public class MemberValidator {
         return Mono.empty();
     }
 
-    public static void validateForEdit(MemberRequest memberRequest) {
+    public static Mono<Void> validateForEdit(MemberRequest memberRequest) {
         if (!memberRequest.getMemberPassword().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
-            throw new CustomException("Invalid member password");
+           return Mono.error( new CustomException(ErrorTypes.INVALID_MEMBER_PW.errorMessage));
         }
         if (!memberRequest.getMemberNewPassword().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
-            throw new CustomException("Invalid member new password");
+           return Mono.error( new CustomException(ErrorTypes.CHECK_NEW_MEMBER_PW.errorMessage));
         }
+        return Mono.empty();
     }
 
-    public static void validateForDelete(MemberRequest memberRequest) {
+    public static Mono<Void> validateForDelete(MemberRequest memberRequest) {
         if (!memberRequest.getMemberPassword().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$") || !memberRequest.getMemberPasswordConfirm().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
-            throw new CustomException("Invalid member password");
+            return Mono.error( new CustomException(ErrorTypes.INVALID_MEMBER_PW.errorMessage));
         }
         if (!memberRequest.getMemberPassword().equals(memberRequest.getMemberPasswordConfirm())) {
-            throw new CustomException("passwords do not match");
+            return Mono.error(new CustomException(ErrorTypes.CHECK_NEW_MEMBER_PW.errorMessage));
         }
+        return Mono.empty();
     }
 
 

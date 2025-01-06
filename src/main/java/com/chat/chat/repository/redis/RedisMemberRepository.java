@@ -3,6 +3,7 @@ package com.chat.chat.repository.redis;
 import com.chat.chat.entity.Member;
 import com.chat.chat.repository.Impl.MemberRepositoryInterface;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class RedisMemberRepository implements MemberRepositoryInterface {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
@@ -58,8 +60,5 @@ public class RedisMemberRepository implements MemberRepositoryInterface {
         return redisTemplate.delete("member:" + memberId).map(count -> count > 0);
     }
 
-    public Mono<Boolean> updateField(String memberId, String field, String newValue) {
-        return redisTemplate.opsForHash()
-                .put("member:" + memberId, field, newValue);
-    }
+
 }

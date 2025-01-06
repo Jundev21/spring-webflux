@@ -19,6 +19,7 @@ public class Member {
 	private String id;
 	private String memberId;
 	private String memberPassword;
+	@CreatedDate
 	private LocalDateTime createdDate;
 
 
