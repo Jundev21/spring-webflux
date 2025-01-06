@@ -57,4 +57,9 @@ public class RedisMemberRepository implements MemberRepositoryInterface {
     public Mono<Boolean> deleteMember(String memberId) {
         return redisTemplate.delete("member:" + memberId).map(count -> count > 0);
     }
+
+    public Mono<Boolean> updateField(String memberId, String field, String newValue) {
+        return redisTemplate.opsForHash()
+                .put("member:" + memberId, field, newValue);
+    }
 }
