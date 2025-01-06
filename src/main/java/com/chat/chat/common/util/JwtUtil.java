@@ -18,8 +18,8 @@ public class JwtUtil {
 
     private final JwtConfig jwtConfig;
 
-    // 토큰 생성
-    public Mono<String> generateToken(String memberId) {
+
+    public Mono<String> createToken(String memberId) {
         return Mono.fromCallable(() -> Jwts.builder()
                 .setSubject(memberId)
                 .setIssuedAt(new Date())

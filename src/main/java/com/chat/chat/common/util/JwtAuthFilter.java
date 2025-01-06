@@ -34,13 +34,14 @@ public class JwtAuthFilter implements WebFilter {
         if (path.equals("/api/auth/login")||path.equals("/api/auth/register")
 //          ||path.equals("/api/chat/room")
         ) {
-
             return chain.filter(exchange);
         }
+
         String header = exchange.getRequest().getHeaders().getFirst("Authorization");
-        if (header!=null || !header.startsWith("Bearer ")) {
-            Mono.error(new CustomException("header is not valid"));
+        if (header == null || !header.startsWith("Bearer ")) {
+            return Mono.error(new CustomException("header is not valid"));
         }
+
 
         String token = header.substring(7);
         return jwtUtil.validateToken(token)
