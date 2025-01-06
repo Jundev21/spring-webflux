@@ -37,21 +37,20 @@ public class MemberHandler {
                                 "User register successfully",
                                 Map.of("memberId", member.getMemberId())
                         )))
-
+                )
                 .onErrorResume(CustomException.class, error -> {
                     log.error("Custom Exception :{}", error.getMessage());
                     return ServerResponse.badRequest()
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail(error.getMessage()));
                 })
-
                 .onErrorResume(error -> {
                     log.error("Unexpected Exception :{}", error.getMessage());
                     return ServerResponse.status(500)
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail("Internal Server Error"));
 
-                }));
+                });
     }
 
 

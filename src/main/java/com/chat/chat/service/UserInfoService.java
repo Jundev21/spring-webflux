@@ -5,6 +5,7 @@ import com.chat.chat.dto.response.MemberResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.repository.CustomMemberRepository;
 import com.chat.chat.repository.MemberRepository;
+import com.chat.chat.repository.RepositorySelector;
 import com.chat.chat.repository.redis.RedisMemberRepository;
 import com.chat.chat.repository.redis.RedisRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class UserInfoService {
 
     private final MemberRepository memberRepo;
     private final RedisRepository redisRepo;
+    private final RepositorySelector repoSelector;
     private final CustomMemberRepository customMemberRepo;
 
     /**
@@ -29,27 +31,39 @@ public class UserInfoService {
      * redis 에 user created at 추가하기
      */
     public Mono<MemberResponse> getUserInfo(String memberId) {
-        return redisRepo.exists(memberId)
-                .flatMap(exists -> {
-                    if (exists) {
-                        return redisRepo.findMemberById(memberId)
-                                .flatMap(memberData -> {
-                                    MemberResponse response = new MemberResponse();
-                                    response.setMemberId(memberData.getMemberId());
-                                    response.setCreateTime(memberData.getCreatedDate());
-                                    return Mono.just(response);
-                                });
-                    } else {
-                        return memberRepo.findByMemberId(memberId)
-                                .flatMap(memberData -> {
-                                    MemberResponse response = new MemberResponse();
-                                    response.setMemberId(memberData.getMemberId());
-                                    response.setCreateTime(memberData.getCreatedDate());
-                                    return Mono.just(response);
-                                }).switchIfEmpty(Mono.error(new CustomException("Member not found")));
-                    }
+        return repoSelector.selectRepo(memberId)
+                .flatMap(repo->repo.findMemberById(memberId))
+                .flatMap(member -> {
+                    MemberResponse memberResponse = new MemberResponse();
+                    memberResponse.setMemberId(member.getId());
+                    memberResponse.setCreateTime(member.getCreatedDate());
+                    return Mono.just(memberResponse);
                 });
     }
+
+
+//    public Mono<MemberResponse> getUserInfo(String memberId) {
+//        return redisRepo.exists(memberId)
+//                .flatMap(exists -> {
+//                    if (exists) {
+//                        return redisRepo.findMemberById(memberId)
+//                                .flatMap(memberData -> {
+//                                    MemberResponse response = new MemberResponse();
+//                                    response.setMemberId(memberData.getMemberId());
+//                                    response.setCreateTime(memberData.getCreatedDate());
+//                                    return Mono.just(response);
+//                                });
+//                    } else {
+//                        return memberRepo.findByMemberId(memberId)
+//                                .flatMap(memberData -> {
+//                                    MemberResponse response = new MemberResponse();
+//                                    response.setMemberId(memberData.getMemberId());
+//                                    response.setCreateTime(memberData.getCreatedDate());
+//                                    return Mono.just(response);
+//                                }).switchIfEmpty(Mono.error(new CustomException("Member not found")));
+//                    }
+//                });
+//    }
 
     /**
      * 레디스에 id 있는가? -> 없다 -> 데이터 베이스 탐색 -> 비밀 번호는 맞는가? -> 변경 -> 데이터 베이스 변경후 -> 레디스 업데이트

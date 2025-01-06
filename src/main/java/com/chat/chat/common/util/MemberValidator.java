@@ -1,7 +1,8 @@
 package com.chat.chat.common.util;
 
-import com.chat.chat.common.error.ErrorTypes;
+
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.responseEnums.ErrorTypes;
 import com.chat.chat.dto.request.MemberRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

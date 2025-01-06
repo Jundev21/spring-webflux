@@ -1,7 +1,8 @@
 package com.chat.chat.service;
 
-import com.chat.chat.common.error.ErrorTypes;
+
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.responseEnums.ErrorTypes;
 import com.chat.chat.common.util.JwtUtil;
 import com.chat.chat.dto.request.MemberRequest;
 import com.chat.chat.dto.response.TokenResponse;

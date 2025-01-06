@@ -1,7 +1,8 @@
 package com.chat.chat.repository;
 
-import com.chat.chat.common.error.ErrorTypes;
+
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.common.responseEnums.ErrorTypes;
 import com.chat.chat.repository.Impl.MemberRepositoryInterface;
 import com.chat.chat.repository.redis.RedisMemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class RepositorySelector {
                 })
                 .onErrorResume(error -> {
                     log.error("레포지포리 선택 중 예외 발생: {}", memberId);
-                    return Mono.error(new CustomException("Failed to select repository for memberId: " + memberId));
+                    return Mono.error(new CustomException(ErrorTypes.FAILED_TO_SELECT_REPO.errorMessage));
                 });
 }
     public Mono<Void> existInRepo(String memberId) {
@@ -45,7 +46,7 @@ public class RepositorySelector {
                                     if (mongoExists) {
                                         return Mono.empty();
                                     } else {
-                                        return Mono.error(new CustomException("Member not found in any repository. Error type 처리 예정."));
+                                        return Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage));
                                     }
                                 });
                     }

@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 
+import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Room;
 
 import reactor.core.publisher.Mono;
@@ -16,6 +17,7 @@ public interface RoomRepository extends ReactiveMongoRepository<Room,String> {
 	Mono<Long> removeRoomMember(String roomId, String memberId);
 
 	@Query("{ '_id' : ?0 }")
-	@Update("{ '$push': { 'groupMembers': { 'memberId': ?1 } } }")
-	Mono<Long> joinRoomMember(String roomId, String memberId);
+	@Update("{ '$push': { 'groupMembers': ?1 } }")
+	Mono<Long> joinRoomMember(String roomId, Member memberInfo);
+	Mono<Boolean> existsByRoomName(String roomName);
 }
