@@ -7,6 +7,8 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 
+
+//https://springdoc.org/ 스웨거 레퍼런스
 @Configuration
 public class SwaggerConfig {
 	@Bean
