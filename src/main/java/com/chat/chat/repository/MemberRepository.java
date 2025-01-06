@@ -1,5 +1,6 @@
 package com.chat.chat.repository;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -8,6 +9,6 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface MemberRepository extends ReactiveMongoRepository<Member, String> {
-    Mono<Member> findByMemberId(String MemberId);
-    Mono<Boolean> existsByMemberId(String MemberId);
+    Mono<Member> findByMemberId(String memberId);
+    Mono<Boolean> existsByMemberId(String memberId);
 }

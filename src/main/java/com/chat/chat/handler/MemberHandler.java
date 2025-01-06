@@ -22,25 +22,28 @@ public class MemberHandler {
 
     private final MemberService memberService;
 
+    // Todo : memberRequest 객체를 새로 만드는게 나은지 .. 아니면 json inculde 로 사용해도 괜찮은지
+    // Todo : AdviceController 생성해서 handler 간단하게 만들기
+
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validateForLogin)
-                .doOnNext(memberRequest -> log.info("Received request: {}", memberRequest))
-                .flatMap(MemberRequest -> memberService.register(Mono.just(MemberRequest)))
+                .flatMap(memberRequest ->
+                        MemberValidator.validateForLogin(memberRequest).then(Mono.just(memberRequest)))
+                .doOnNext(memberRequest -> log.info("요청받은 객체 , memberNewPassword , memberPasswordConfirm 이 null 이여야 정상: {}", memberRequest))
+                .flatMap(MemberRequest -> memberService.register(MemberRequest)
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(
                                 "User register successfully",
                                 Map.of("memberId", member.getMemberId())
                         )))
-
+                )
                 .onErrorResume(CustomException.class, error -> {
                     log.error("Custom Exception :{}", error.getMessage());
                     return ServerResponse.badRequest()
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail(error.getMessage()));
                 })
-
                 .onErrorResume(error -> {
                     log.error("Unexpected Exception :{}", error.getMessage());
                     return ServerResponse.status(500)
@@ -50,22 +53,17 @@ public class MemberHandler {
                 });
     }
 
-    /**
-     * 로그인 요청 핸들러 메서드
-     * <p>
-     * 1.클라이언트 로그인 요청을 받고
-     * 2.입력데이터 검증
-     * 3.서비스 계층에 로그인 처리 위임
-     * (success) 회원아이디 , 액세스 토큰 반환
-     *
-     * @param request {@link ServerRequest} 객체로, 요청 본문에 회원 로그인 정보 포함
-     * @return {@link Mono}가 방출하는 {@link ServerResponse}로, 로그인 처리 결과
-     */
+
+    //TODO : 1. handler -> service Mono 로 던지는게 아니라 .. 그 자체 request 로 던질것...
+    //TODO : 2. errorhandle => controllerAvice 로 전역적으로 관리하기
+
+
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
-                .doOnNext(MemberValidator::validateForLogin)
-                .doOnNext(memberRequest -> log.info("Received Request :{}", memberRequest))
-                .flatMap(MemberRequest -> memberService.login(Mono.just(MemberRequest)))
+                .flatMap(memberRequest ->
+                        MemberValidator.validateForLogin(memberRequest).then(Mono.just(memberRequest)))
+                .doOnNext(memberRequest -> log.info("요청받은 객체 , memberNewPassword , memberPasswordConfirm 이 null 이여야 정상: :{}", memberRequest))
+                .flatMap(MemberRequest -> memberService.login(MemberRequest))
                 .flatMap(tokenResponse -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(

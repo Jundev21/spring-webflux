@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ServerWebInputException;
 
 import com.chat.chat.common.responseEnums.ErrorTypes;
 import com.chat.chat.common.exception.CustomException;
@@ -43,6 +44,7 @@ public class RoomHandler {
 	}
 
 	public Mono<ServerResponse> deleteRoomHandler(ServerRequest request) {
+
 		return request.bodyToMono(RoomDeleteRequest.class)
 			.switchIfEmpty(Mono.error(new CustomException(ErrorTypes.EMPTY_REQUEST.errorMessage)))
 			.flatMap(roomRequest -> roomService.deleteRoom(request.pathVariable("roomId"), roomRequest))
@@ -104,7 +106,6 @@ public class RoomHandler {
 			.flatMap(userAllRooms -> ServerResponse.ok().
 				contentType(MediaType.APPLICATION_JSON).
 				bodyValue(userAllRooms))
-
 			.onErrorResume(CustomException.class, error -> {
 				log.error("CustomError Exception :{}", error.getMessage());
 				return ServerResponse.badRequest()
