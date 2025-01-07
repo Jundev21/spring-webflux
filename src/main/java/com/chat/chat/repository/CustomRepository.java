@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class CustomMemberRepository {
+public class CustomRepository {
 
     private final ReactiveMongoTemplate mongoTemplate;
 

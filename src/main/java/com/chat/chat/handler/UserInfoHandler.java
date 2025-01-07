@@ -119,11 +119,6 @@ public class UserInfoHandler {
                 .cast(String.class)
                 .doOnNext(memberId -> log.info("memberId:{}", memberId))
                 .flatMap(memberId -> userInfoService.deleteUserInfo(memberId))
-                // flatmap-> then 으로 변경함
-                // - flatMap 입력데이터를 반환해서 새로운 Mono , Flux 를 반환 그리고 이 새로운 Pulisher 를 다음 단계로 전달함
-                // - then 입력 데이데를 무시하도 다음 작업으로 이동함 이전 결과를 사용할 필요 없을 때 적합
-                // .flatMap은 이전 작업의 결과 값을 필요,  (Mono<void 반환했음>), Mono<Void>는 값이 없어서 result 에서 흐름이 중단 결과값을 전달 자체를 하지 않음
-                // .then은 결과 값을 무시하고 작업 완료 후 다음 작업으로 바로 이동하므로 적합
                 .then(Mono.defer(() -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(ResponseUtils.success(SuccessTypes.DELETE_SUCCESS.successMessage, null))))

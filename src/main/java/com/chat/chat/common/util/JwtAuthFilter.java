@@ -3,7 +3,6 @@ package com.chat.chat.common.util;
 import com.chat.chat.common.exception.CustomException;
 import com.chat.chat.common.responseEnums.ErrorTypes;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -24,7 +23,6 @@ import reactor.core.publisher.Mono;
  * 3. validateToken 호출
  * 4. memberId 를 클레임에 저장해서 다른 엔트포인트에서 serverRequest 에서 꺼내쓸수 있도록 설계
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter implements WebFilter {
@@ -35,6 +33,7 @@ public class JwtAuthFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
         if (path.equals("/api/auth/login")||path.equals("/api/auth/register")
+            || path.contains("v3") || path.contains("swagger")
         ) {
             return chain.filter(exchange);
         }
@@ -50,7 +49,7 @@ public class JwtAuthFilter implements WebFilter {
                 .flatMap(claims -> {
                     String memberId = claims.getSubject();
                     exchange.getAttributes().put("memberId", memberId);
-                    log.info("Jwt_Parse_memberId:{}", memberId);
+                    System.out.println("JWT_memberId:"+ memberId);
                     return chain.filter(exchange);
                 })
                 .onErrorResume(e -> {

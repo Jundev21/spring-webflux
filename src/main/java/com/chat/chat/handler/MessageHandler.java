@@ -39,7 +39,7 @@ public class MessageHandler {
 	public Mono<ServerResponse> createMessage(ServerRequest request) {
 		return request.bodyToMono(MessageRequest.class)
 			.switchIfEmpty(Mono.error(new CustomException(ErrorTypes.EMPTY_REQUEST.errorMessage)))
-			.flatMap(messageService::createMessage)
+			.flatMap(messageInfo -> messageService.createMessage(messageInfo,extractMemberInfo(request)))
 			.map(result -> ResponseUtils.success(SuccessTypes.CREATE_MESSAGES.successMessage, result))
 			.flatMap(result -> ServerResponse.ok()
 				.body(Mono.just(result), ApiResponse.class)
@@ -53,4 +53,8 @@ public class MessageHandler {
 	private String extractRoomId(ServerRequest request) {
 		return request.pathVariable("roomId");
 	}
+	private String extractMemberInfo(ServerRequest request){
+		return request.exchange().getAttribute("memberId");
+	}
+
 }

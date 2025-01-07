@@ -24,11 +24,7 @@ import java.util.Map;
  * 받는값 : request 는 MemberRequest 객체를 통해 받을 건데 그중 필수 값은 MemberValidator 라는 static 함수로 검사예정
  */
 
-/**
- * Takeaways
- * webflux 는 핸들러와 서비스 등 모든 레이어에서 데이터가 오갈때 명시적으로 publisher 타입을 줘야하는줄 알았는데 아니였음 이미 비동기로 움직이고 있기 때문에
- * 각 레이어사이에서의 호출은 자유로웠음
- */
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -62,8 +58,6 @@ public class MemberHandler {
 
                 });
     }
-
-
 
 
 

@@ -29,7 +29,7 @@ public class Room {
 	public Room(RoomRequest roomRequest, Member member) {
 		this.roomName = roomRequest.roomName();
 		this.roomPassword = roomRequest.roomPassword();
-		this.adminMemberId = roomRequest.adminMemberId();
+		this.adminMemberId = member.getMemberId();
 		this.groupMembers.add(member);
 	}
 

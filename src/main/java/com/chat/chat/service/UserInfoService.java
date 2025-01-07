@@ -4,7 +4,7 @@ import com.chat.chat.common.exception.CustomException;
 import com.chat.chat.common.responseEnums.ErrorTypes;
 import com.chat.chat.dto.response.MemberResponse;
 import com.chat.chat.entity.Member;
-import com.chat.chat.repository.CustomMemberRepository;
+import com.chat.chat.repository.CustomRepository;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.RepositorySelector;
 import com.chat.chat.repository.redis.RedisMemberRepository;
@@ -22,7 +22,7 @@ public class UserInfoService {
     private final MemberRepository memberRepo;
     private final RedisMemberRepository redisMemberRepo;
     private final RepositorySelector repoSelector;
-    private final CustomMemberRepository customMemberRepo;
+    private final CustomRepository customMemberRepo;
 
     /**
      * redis 에 있는지 확인 , 없으면 데이터 베이스 , 데이터 베이스에도 없으면 에러
