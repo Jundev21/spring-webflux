@@ -95,55 +95,71 @@ public class RoomHandler {
 						ApiResponse.class));
 	}
 
-	/**
-	 * * 만약에 null 값이 들어올 수 있으니 justOrEmpty 로 래핑 -> null 이 들어오면 터트려야 함 -> 추후 리팩토링 대상
-	 * // 성공시 응답값도 리팩토링 필요 현재 위의 로직과 맞추기 위해 ResponseUtils 사용안함
-	 */
-	public Mono<ServerResponse> retrievedUserRoomsHandler(ServerRequest request) {
-		return Mono.justOrEmpty(request.attribute("memberId")).cast(String.class)
-			.doOnNext(memberId -> log.info("memberId:{}", memberId))
-			.flatMap(memberId -> roomService.getUserAllRooms(memberId))
-			.flatMap(userAllRooms -> ServerResponse.ok().
-				contentType(MediaType.APPLICATION_JSON).
-				bodyValue(userAllRooms))
-			.onErrorResume(CustomException.class, error -> {
-				log.error("CustomError Exception :{}", error.getMessage());
-				return ServerResponse.badRequest()
-					.contentType(MediaType.APPLICATION_JSON)
-					.bodyValue(ResponseUtils.fail(error.getMessage()));
-			})
-			.onErrorResume(error -> {
-				log.error("Unexpected Exception :{}", error.getMessage());
-				return ServerResponse.status(500)
-					.contentType(MediaType.APPLICATION_JSON)
-					.bodyValue(ResponseUtils.fail("Internal Server Error"));
-			});
-	}
 
-	public Mono<ServerResponse> searchRoomsByTitleHandler(ServerRequest request) {
-		Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class)
-			.doOnNext(memberId -> log.info("memberId:{}", memberId));
+    public Mono<ServerResponse> retrievedUserRoomsHandler(ServerRequest request) {
 
-		Mono<RoomSearchRequest> searchRequestMono = request.bodyToMono(RoomSearchRequest.class);
+        Mono<String> memberIdInReq = Mono.justOrEmpty(request.attribute("memberId"))
+                .cast(String.class)
+                .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)))
+                .doOnNext(memberId -> log.info("memberId: {}", memberId));
 
-		return Mono.zip(memberIdMono, searchRequestMono)
-			.flatMap(tuple -> {
-				String memberId = tuple.getT1();
-				RoomSearchRequest roomSearchRequest = tuple.getT2();
-				return roomService.searchRoomByTitle(
-					memberId,
-					roomSearchRequest.getTitle(),
-					roomSearchRequest.getPage(),
-					roomSearchRequest.getSize()
-				);
-			})
-			.flatMap(rooms -> ServerResponse.ok()
-				.contentType(MediaType.APPLICATION_JSON)
-				.bodyValue(rooms));
+        int page = Integer.parseInt(request.queryParam("page").orElse("0"));
+        int size = Integer.parseInt(request.queryParam("size").orElse("10"));
 
-	}
+        RoomSearchRequest requestWithPagination = new RoomSearchRequest(page, size);
 
-	private String extractMemberInfo(ServerRequest request){
-		return request.exchange().getAttribute("memberId");
-	}
+        return memberIdInReq.flatMap(memberId ->
+                roomService.getUserAllRooms(memberId, requestWithPagination)
+                        .flatMap(roomListResponses ->
+                                ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(ResponseUtils.success(
+                                                SuccessTypes.USER_ROOM_RETRIEVED_SUCCESSFULLY.successMessage,
+                                                roomListResponses)))
+                        .onErrorResume(CustomException.class, error -> {
+                            log.error("CustomError Exception :{}", error.getMessage());
+                            return ServerResponse.badRequest()
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(ResponseUtils.fail(error.getMessage()));
+                        })
+                        .onErrorResume(error -> {
+                            log.error("Unexpected Exception :{}", error.getMessage());
+                            return ServerResponse.status(500)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(ResponseUtils.fail("Internal Server Error"));
+                        }));
+
+    }
+
+
+    public Mono<ServerResponse> searchRoomsByTitleHandler(ServerRequest request) {
+        Mono<String> memberIdInReq = Mono.justOrEmpty(request.attribute("memberId"))
+                .cast(String.class)
+                .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)))
+                .doOnNext(memberId -> log.info("memberId: {}", memberId));
+
+        String title = request.queryParam("title").orElse("");
+        int page = Integer.parseInt(request.queryParam("page").orElse("0"));
+        int size = Integer.parseInt(request.queryParam("size").orElse("10"));
+
+        RoomSearchRequest requestWithPagination = new RoomSearchRequest(title,page, size);
+
+        return memberIdInReq.flatMap(memberId ->
+                roomService.searchRoomByTitle(memberId, requestWithPagination))
+                .flatMap(rooms -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(ResponseUtils.success(SuccessTypes.SEARCH_RESULT_ROOM_RETRIEVED_SUCCESSFULLY.successMessage, rooms))
+                        .onErrorResume(CustomException.class, error -> {
+                            log.error("CustomError Exception :{}", error.getMessage());
+                            return ServerResponse.badRequest()
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(ResponseUtils.fail(error.getMessage()));
+                        })
+                        .onErrorResume(error -> {
+                            log.error("Unexpected Exception :{}", error.getMessage());
+                            return ServerResponse.status(500)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(ResponseUtils.fail("Internal Server Error"));
+                        }));
+    }
 }

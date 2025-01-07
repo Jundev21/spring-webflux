@@ -5,6 +5,8 @@ import static com.chat.chat.dto.response.RoomListResponse.*;
 
 import java.util.List;
 
+import com.chat.chat.dto.request.RoomSearchRequest;
+import com.chat.chat.repository.RepositorySelector;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +17,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import com.chat.chat.common.exception.CustomException;
-import com.chat.chat.common.util.MemberValidator;
 import com.chat.chat.dto.request.RoomDeleteRequest;
 import com.chat.chat.dto.request.RoomRequest;
 import com.chat.chat.dto.response.BasicMemberResponse;
@@ -42,6 +43,7 @@ public class RoomService {
 	private final MemberRepository memberRepository;
 	private final CustomMemberRepository customMemberRepository;
 	private final CustomRoomRepository customRoomRepository;
+	private final RepositorySelector repositorySelector;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
 	//reactive mongodb pagenation 정보
@@ -158,28 +160,32 @@ public class RoomService {
 		return Mono.empty();
 	}
 
-	public Mono<List<RoomListResponse>> getUserAllRooms(String memberId) {
-		return customMemberRepository.findRoomsByMemberId(memberId)
-			.doOnNext(room -> log.info("조회된 방: {}", room))
-			.map(room -> {
-				List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
-					.map(BasicMemberResponse::basicMemberResponse)
-					.toList();
-				return RoomListResponse.roomListResponse(room, groupMembers);
-			})
-			.doOnNext(response -> log.info("특정 유저의 방 조회: {}", response))
-			.collectList();
-	}
+    public Mono<List<RoomListResponse>> getUserAllRooms(String memberId , RoomSearchRequest searchRequest) {
+        return repositorySelector.existInRepo(memberId)
+                .then(Mono.defer(() ->
+                        customMemberRepository.findRoomsByMemberIdWithPagination(memberId ,searchRequest.getPage(), searchRequest.getSize())
+                                .doOnNext(room -> log.info("조회된 방: {}", room))
+                                .map(room -> {
+                                    List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+                                            .map(BasicMemberResponse::basicMemberResponse)
+                                            .toList();
+                                    return RoomListResponse.roomListResponse(room, groupMembers);
+                                })
+                                .doOnNext(response -> log.info("특정 유저의 방 조회: {}", response))
+                                .collectList()));
 
-	public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, String title, int page, int size) {
-		// member 필요없음 빼기
-		return customMemberRepository.findRoomsByTitleWithPagination(title, page, size)
-			.map(room -> {
-				List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
-					.map(BasicMemberResponse::basicMemberResponse)
-					.toList();
-				return RoomListResponse.roomListResponse(room, groupMembers);
-			})
-			.collectList();
-	}
+    }
+
+    public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, RoomSearchRequest searchRequest) {
+        return repositorySelector.existInRepo(memberId)
+                .then(Mono.defer(() -> customMemberRepository.findRoomsByTitleWithPagination(searchRequest.getTitle(), searchRequest.getPage(), searchRequest.getSize())
+                        .map(room -> {
+                            List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
+                                    .map(BasicMemberResponse::basicMemberResponse)
+                                    .toList();
+                            return RoomListResponse.roomListResponse(room, groupMembers);
+                        })
+                        .collectList()
+                ));
+    }
 }
