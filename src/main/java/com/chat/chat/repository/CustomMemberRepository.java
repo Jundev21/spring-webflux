@@ -46,7 +46,9 @@ public class CustomMemberRepository {
     public Mono<Room> updateRoomForDeleteUser(String memberId) {
         Query query = new Query(Criteria.where("groupMembers.memberId").is(memberId));
 
-        Update update = new Update().set("groupMembers.$.memberId", "undefined");
+        Update update = new Update().set("groupMembers.$.memberId", "undefined")
+                .set("groupMembers.$.memberPassword", "undefined")
+                .set("groupMembers.$.createdDate", null);
 
         return mongoTemplate.findAndModify(
                 query,

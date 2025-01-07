@@ -1,5 +1,6 @@
 package com.chat.chat.common.responseEnums;
 
+import io.jsonwebtoken.Header;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public enum ErrorTypes {
 	REDIS_SAVE_FAILED("레디스에서 저장 실패"),
 	REDIS_DELETE_FAILED("레디스에서 삭제 실패"),
 	FAILED_TO_SELECT_REPO("레디스 , 데이터베이스를 선택하는데 문제가 있습니다"),
-	FAILED_TO_DELETE_REDIS("레디스에서 삭제하는것을 실패했습니다");
+	FAILED_TO_DELETE_REDIS("레디스에서 삭제하는것을 실패했습니다"),
+	HEADER_IS_NOT_VALID("요청의 헤더가 유효하지 않습니다");
 	public final String errorMessage;
 }

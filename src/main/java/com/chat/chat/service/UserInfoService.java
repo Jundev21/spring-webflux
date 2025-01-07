@@ -26,7 +26,6 @@ public class UserInfoService {
 
     /**
      * redis 에 있는지 확인 , 없으면 데이터 베이스 , 데이터 베이스에도 없으면 에러
-     * redis 에 user created at 추가하기
      */
     public Mono<MemberResponse> getUserInfo(String memberId) {
         return repoSelector.selectRepo(memberId)
@@ -38,7 +37,6 @@ public class UserInfoService {
                     return Mono.just(memberResponse);
                 });
     }
-
 
 
     /**
@@ -90,22 +88,15 @@ public class UserInfoService {
     }
 
 
-
-
-
     /**
      * 어차피 데이터 베이스를 거쳐야함 다른 컬렉션 때문에 먼저 레디스를 탐색하는것은 무의미 하다고 생각
      * 추후에 지워지면 수동으로 마지막에 지우는게 좋을 듯 하다
      */
 
-    public Mono<Void> deleteUserInfo(String memberId, String memberPassword) {
+    public Mono<Void> deleteUserInfo(String memberId) {
         return memberRepo.findByMemberId(memberId)
                 .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)))
                 .flatMap(member -> {
-
-                    if (!BCrypt.checkpw(memberPassword, member.getMemberPassword())) {
-                        return Mono.error(new CustomException(ErrorTypes.NOT_VALID_MEMBER_PASSWORD.errorMessage));
-                    }
 
                     return memberRepo.delete(member)
                             .then(customMemberRepo.updateMessageForDeleteUser(memberId))
