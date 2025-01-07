@@ -162,4 +162,8 @@ public class RoomHandler {
                                     .bodyValue(ResponseUtils.fail("Internal Server Error"));
                         }));
     }
+
+	private String extractMemberInfo(ServerRequest request){
+		return request.exchange().getAttribute("memberId");
+	}
 }
