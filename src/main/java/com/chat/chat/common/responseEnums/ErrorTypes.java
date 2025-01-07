@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ErrorTypes {
 	EMPTY_REQUEST("요청값이 비어있습니다."),
+	SOCKET_ERROR("소켓 전송에 에러가 있습니다."),
+	SOCKET_READ_REQUEST_ERROR("소켓 데이터 정보에 오류가있습니다."),
 	NOT_EXIST_ROOM("존재하지 않는 방입니다."),
 	ALREADY_EXIST_ROOM("이미 존재하는 방입니다."),
 	ALREADY_JOINED_ROOM("이미 방에 참여한 멤버입니다."),
@@ -22,6 +24,8 @@ public enum ErrorTypes {
 	REDIS_SAVE_FAILED("레디스에서 저장 실패"),
 	REDIS_DELETE_FAILED("레디스에서 삭제 실패"),
 	FAILED_TO_SELECT_REPO("레디스 , 데이터베이스를 선택하는데 문제가 있습니다"),
-	FAILED_TO_DELETE_REDIS("레디스에서 삭제하는것을 실패했습니다");
+	FAILED_TO_DELETE_REDIS("레디스에서 삭제하는것을 실패했습니다"),
+	NOT_EXIST_JWT("토큰이 존재하지 않습니다.");
+
 	public final String errorMessage;
 }

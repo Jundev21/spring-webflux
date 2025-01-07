@@ -49,7 +49,7 @@ public class RoomTest {
 	@DisplayName("모든 채팅방 조회")
 	public void getAllRoomTest() {
 		BasicRoomResponse basicRoomResponse = BasicRoomResponse.basicRoomResponse(
-			new Room(new RoomRequest("test name", "password", "userAdmin_ID"), null));
+			new Room(new RoomRequest("test name", "password"), null));
 
 		when(roomService.getAllRooms("0","10")).thenReturn(null);
 
@@ -62,11 +62,11 @@ public class RoomTest {
 	@Test
 	@DisplayName("채팅방 생성 테스트")
 	public void createRoomTest() {
-		RoomRequest roomRequest = new RoomRequest("test name", "password", "userAdmin_ID");
+		RoomRequest roomRequest = new RoomRequest("test name", "password");
 
 		Room savedRoom = new Room(roomRequest, null);
 
-		when(roomService.createRooms(Mockito.any())).thenReturn(Mono.just(new RoomListResponse("kim", "asdf", null)));
+		when(roomService.createRooms(Mockito.any(),Mockito.any())).thenReturn(Mono.just(new RoomListResponse("roomId","kim", "asdf", null)));
 
 		webTestClient.post()
 			.uri("/api/chat/room")

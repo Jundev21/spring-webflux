@@ -36,6 +36,8 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // jwt 생성 및 검증
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5' // jwt 구현체
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5' // jackson 기반의 json 파싱 지원
+	implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0'
+
 
 
 }

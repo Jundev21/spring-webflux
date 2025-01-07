@@ -14,7 +14,9 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
 import com.chat.chat.common.exception.CustomException;
+import com.chat.chat.dto.request.LiveMessageRequest;
 import com.chat.chat.dto.request.MessageRequest;
+import com.chat.chat.dto.response.LiveStreamResponse;
 import com.chat.chat.dto.response.MessageResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Message;
@@ -27,9 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-// WebSocketSession 이 사용되는곳
-// 새로운 이벤트를 등록하기위한 서비스
-// EmitterProcessor stream에 연결되어있는 모든 클라이언트들에게 데이터를 보냄
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -40,25 +40,25 @@ public class MessageService {
 	private final RoomRepository roomRepository;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
 
-	public Mono<MessageResponse> createMessage(MessageRequest messageRequest) {
+	public Mono<MessageResponse> createMessage(MessageRequest messageRequest, String senderId) {
 		return Mono.just(messageRequest)
 			.flatMap(messagesInfo -> isExistRoom(messagesInfo.roomId())
-				.flatMap(e -> isExistMember(messagesInfo.memberSenderId()))
-				.flatMap(e -> messageRepository.save(new Message(messagesInfo))
+				.flatMap(e -> isExistMember(senderId))
+				.flatMap(e -> messageRepository.save(new Message(messagesInfo, senderId))
 					.map(MessageResponse::messageResponse))
 			)
 			.doOnNext(e -> log.info(
-				messageRequest.roomId() + "방 에서 " + messageRequest.memberSenderId() + " 님이 메세지를 생성했습니다."));
+				messageRequest.roomId() + "방 에서 " + senderId + " 님이 메세지를 생성했습니다."));
 	}
 
-	public void saveLiveMessage(MessageRequest messageRequest) {
-		Mono.just(messageRequest)
-			.flatMap(messagesInfo -> isExistRoom(messagesInfo.roomId())
-				.flatMap(e -> isExistMember(messagesInfo.memberSenderId()))
+	public Mono<LiveStreamResponse> saveLiveMessage(String roomId ,LiveMessageRequest liveMessageRequest, String senderId) {
+		return Mono.just(liveMessageRequest)
+			.flatMap(messagesInfo -> isExistRoom(roomId)
+				.flatMap(e -> isExistMember(senderId))
 				.doOnNext(e -> log.info(
-					messagesInfo.memberSenderId() + " 님이 " + messagesInfo.roomId() + " 방에 메세지 전송 및 저장 하였습니다."))
-				.flatMap(e -> messageRepository.save(new Message(messagesInfo))))
-			.subscribe();
+					senderId + " 님이 " + roomId + " 방에 메세지 전송 및 저장 하였습니다."))
+				.flatMap(e -> messageRepository.save(new Message(roomId, messagesInfo, senderId))))
+			.map(LiveStreamResponse::liveStreamResponse);
 	}
 
 	public Mono<Page<MessageResponse>> getAllChatMessage(String roomId, String page, String size) {
