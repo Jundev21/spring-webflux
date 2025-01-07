@@ -16,6 +16,15 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+/**
+ * Pre-Development:
+ *
+ * createNewMemberHandler/ loginMemberHandler - 유저 회원가입 핸들러 / 유저 회원가입 핸들러
+ * 특징 : 필터에 영향을 안받음 지금 상태는 토큰이 없는 상태이므로.
+ * 받는값 : request 는 MemberRequest 객체를 통해 받을 건데 그중 필수 값은 MemberValidator 라는 static 함수로 검사예정
+ */
+
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -23,13 +32,11 @@ public class MemberHandler {
 
     private final MemberService memberService;
 
-
-
     public Mono<ServerResponse> createNewMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
                 .flatMap(memberRequest ->
                         MemberValidator.validateForLogin(memberRequest).then(Mono.just(memberRequest)))
-                .doOnNext(memberRequest -> log.info("요청받은 객체 , memberNewPassword , memberPasswordConfirm 이 null 이여야 정상: {}", memberRequest))
+                .doOnNext(memberRequest -> log.info("요청받은 객체 , (memberNewPassword은 null 이여야 정상): {}", memberRequest))
                 .flatMap(MemberRequest -> memberService.register(MemberRequest)
                 .flatMap(member -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -54,13 +61,11 @@ public class MemberHandler {
 
 
 
-
-
     public Mono<ServerResponse> loginMemberHandler(ServerRequest request) {
         return request.bodyToMono(MemberRequest.class)
                 .flatMap(memberRequest ->
                         MemberValidator.validateForLogin(memberRequest).then(Mono.just(memberRequest)))
-                .doOnNext(memberRequest -> log.info("요청받은 객체 , memberNewPassword , memberPasswordConfirm 이 null 이여야 정상: :{}", memberRequest))
+                .doOnNext(memberRequest -> log.info("요청받은 객체 , (memberNewPassword은 null 정상): :{}", memberRequest))
                 .flatMap(MemberRequest -> memberService.login(MemberRequest))
                 .flatMap(tokenResponse -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)

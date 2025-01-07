@@ -71,14 +71,6 @@ public class UserInfoRouter {
 			operation = @Operation(
 				tags = "Member",
 				operationId = "postMessage",
-				requestBody = @RequestBody(
-					required = true,
-					description = " 바디 필수값 - 사용자 아이디 , 비밀번호",
-					content = @Content(
-						schema = @Schema(implementation = MemberRequest.class)
-					)
-				),
-				description = "회원탈퇴 API",
 				summary = "회원탈퇴 API",
 				responses = {
 					@ApiResponse(responseCode = "201", content = @Content(mediaType = "사용자 삭제 성공")),

@@ -11,8 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +23,7 @@ import com.chat.chat.dto.response.JoinRoomResponse;
 import com.chat.chat.dto.response.RoomListResponse;
 import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Room;
-import com.chat.chat.repository.CustomMemberRepository;
+import com.chat.chat.repository.CustomRepository;
 import com.chat.chat.repository.CustomRoomRepository;
 import com.chat.chat.repository.MemberRepository;
 import com.chat.chat.repository.RoomRepository;
@@ -41,7 +39,7 @@ public class RoomService {
 
 	private final RoomRepository roomRepository;
 	private final MemberRepository memberRepository;
-	private final CustomMemberRepository customMemberRepository;
+	private final CustomRepository customRepository;
 	private final CustomRoomRepository customRoomRepository;
 	private final RepositorySelector repositorySelector;
 	private final ReactiveMongoTemplate reactiveMongoTemplate;
@@ -163,7 +161,7 @@ public class RoomService {
     public Mono<List<RoomListResponse>> getUserAllRooms(String memberId , RoomSearchRequest searchRequest) {
         return repositorySelector.existInRepo(memberId)
                 .then(Mono.defer(() ->
-                        customMemberRepository.findRoomsByMemberIdWithPagination(memberId ,searchRequest.getPage(), searchRequest.getSize())
+                        customRepository.findRoomsByMemberIdWithPagination(memberId ,searchRequest.getPage(), searchRequest.getSize())
                                 .doOnNext(room -> log.info("조회된 방: {}", room))
                                 .map(room -> {
                                     List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
@@ -178,7 +176,7 @@ public class RoomService {
 
     public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, RoomSearchRequest searchRequest) {
         return repositorySelector.existInRepo(memberId)
-                .then(Mono.defer(() -> customMemberRepository.findRoomsByTitleWithPagination(searchRequest.getTitle(), searchRequest.getPage(), searchRequest.getSize())
+                .then(Mono.defer(() -> customRepository.findRoomsByTitleWithPagination(searchRequest.getTitle(), searchRequest.getPage(), searchRequest.getSize())
                         .map(room -> {
                             List<BasicMemberResponse> groupMembers = room.getGroupMembers().stream()
                                     .map(BasicMemberResponse::basicMemberResponse)

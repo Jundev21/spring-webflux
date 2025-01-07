@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class CustomMemberRepository {
+public class CustomRepository {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
@@ -46,7 +46,9 @@ public class CustomMemberRepository {
     public Mono<Room> updateRoomForDeleteUser(String memberId) {
         Query query = new Query(Criteria.where("groupMembers.memberId").is(memberId));
 
-        Update update = new Update().set("groupMembers.$.memberId", "undefined");
+        Update update = new Update().set("groupMembers.$.memberId", "undefined")
+                .set("groupMembers.$.memberPassword", "undefined")
+                .set("groupMembers.$.createdDate", null);
 
         return mongoTemplate.findAndModify(
                 query,
