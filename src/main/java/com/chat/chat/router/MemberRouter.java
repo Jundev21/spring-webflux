@@ -45,7 +45,7 @@ public class MemberRouter {
 				),
 				parameters = {@Parameter(in = ParameterIn.PATH, name = "roomId", description = "room id")},
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = Member.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Member.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -66,7 +66,7 @@ public class MemberRouter {
 				description = "사용자 로그인 API - 사용자 아이디와 비밀번호를 통하여 로그인",
 				summary = "사용자 로그인 API",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = Member.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Member.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)

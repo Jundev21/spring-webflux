@@ -71,8 +71,7 @@ public class RoomService {
 	}
 
 	public Mono<JoinRoomResponse> joinRoom(String roomId, String memberId) {
-		return isAlreadyJoinedMember(roomId, memberId)
-			.then(
+		return isAlreadyJoinedMember(roomId, memberId).then(
 				Mono.zip(isExistRoom(roomId), isExistMember(memberId))
 					.flatMap(roomMember -> roomRepository.joinRoomMember(roomMember.getT1().getId(),
 						roomMember.getT2()))

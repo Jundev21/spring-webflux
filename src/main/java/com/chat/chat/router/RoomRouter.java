@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import com.chat.chat.dto.request.RoomDeleteRequest;
 import com.chat.chat.dto.request.RoomRequest;
 import com.chat.chat.dto.response.BasicRoomResponse;
 import com.chat.chat.dto.response.ErrorResponse;
@@ -38,7 +39,7 @@ public class RoomRouter {
 				description = "전체 방 조회 API",
 				summary = "전체 방 조회 API",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -59,7 +60,7 @@ public class RoomRouter {
 					)
 				),
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -74,7 +75,7 @@ public class RoomRouter {
 				summary = "방 참여 API",
 				parameters = {@Parameter(in = ParameterIn.PATH, name = "roomId", description = "room id")},
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = JoinRoomResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = JoinRoomResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -89,22 +90,30 @@ public class RoomRouter {
 				parameters = {@Parameter(in = ParameterIn.PATH, name = "roomId", description = "room id")},
 				operationId = "leave room",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = BasicRoomResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BasicRoomResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
 		),
+
 		@RouterOperation(
 			path = "/api/chat/room/{roomId}",
-			method = RequestMethod.DELETE,
+			method = RequestMethod.POST,
 			operation = @Operation(
 				tags = "Room",
-				description = "방 삭제 API - JWT 토큰, roomID 를 사용해서 방 삭제 ",
+				description = "방 삭제 API - JWT 토큰, roomID/password 를 사용해서 방 삭제 ",
 				operationId = "delete room",
 				summary = "방 삭제 API",
 				parameters = {@Parameter(in = ParameterIn.PATH, name = "roomId", description = "room id")},
+				requestBody = @RequestBody(
+					required = true,
+					description = "방 삭제시, 방 비밀번호 필요",
+					content = @Content(
+						schema = @Schema(implementation = RoomDeleteRequest.class)
+					)
+				),
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = BasicRoomResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = BasicRoomResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -118,7 +127,7 @@ public class RoomRouter {
 				summary = "사용자 참여한 전체방 조회 API",
 				operationId = "getAllUsersRoom",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -136,7 +145,7 @@ public class RoomRouter {
 				),
 				operationId = "Search room",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -151,7 +160,7 @@ public class RoomRouter {
 					.POST("", roomHandler::createNewRoomHandler)
 					.POST("/join/{roomId}", roomHandler::joinRoomHandler)
 					.DELETE("/leave/{roomId}", roomHandler::leaveRoomHandler)
-					.DELETE("/{roomId}", roomHandler::deleteRoomHandler)
+					.POST("/{roomId}", roomHandler::deleteRoomHandler)
 					.GET("/users", roomHandler::retrievedUserRoomsHandler)
 					.GET("/search", roomHandler::searchRoomsByTitleHandler)
 			)
