@@ -3,6 +3,7 @@ package com.chat.chat.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -20,8 +21,11 @@ public class SwaggerConfig {
 
 	private Info apiInfo() {
 		return new Info()
-			.title("Chat App")
-			.description("Chat app swagger")
+			.title("Chat API")
+			.description("Chat API")
+			.contact(new Contact()
+				.name("GitHub")
+				.url("https://github.com/acrofutureDev/chat"))
 			.version("1.0.0");
 	}
 }

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
@@ -54,6 +55,7 @@ public class CustomWebSocketHandler implements WebSocketHandler {
 				// 각 방에있는곳에 메세지 스트림에 구독 hot sequence 임으로 구독 된 후 부터의 메세지 내용들을 전달받음
 				roomSinkMap.putIfAbsent(extractRoomId(session), Sinks.many().multicast().onBackpressureBuffer());
 				Sinks.Many<String> roomSink = roomSinkMap.get(roomInfoMemberId.getT1().getId());
+				Flux<String> sinkFlux = roomSink.asFlux();
 
 				// 클라이언트가 전송한 메시지 수신 처리
 				session.receive()
@@ -82,8 +84,7 @@ public class CustomWebSocketHandler implements WebSocketHandler {
 					.subscribe();
 				// Sinks 에 구독되어있는 모든 사용자들에게 메세지 발행
 				return session.send(
-					roomSink.asFlux()
-						.map(session::textMessage)
+					sinkFlux.map(session::textMessage)
 				);
 			});
 	}

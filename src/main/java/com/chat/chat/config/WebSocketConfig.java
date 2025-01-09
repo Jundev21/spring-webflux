@@ -12,9 +12,11 @@ import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Sinks;
 
 @Configuration
+@Slf4j
 @RequiredArgsConstructor
 public class WebSocketConfig {
 
@@ -27,6 +29,7 @@ public class WebSocketConfig {
 	@Bean
 	public HandlerMapping handlerMapping(WebSocketHandler webSocketHandler) {
 		Map<String, WebSocketHandler> map = Map.of("/realTimeChat/{roomId}", webSocketHandler);
+		log.info("클라이언트 웹소켓요청");
 		return new SimpleUrlHandlerMapping(map, 1);
 	}
 

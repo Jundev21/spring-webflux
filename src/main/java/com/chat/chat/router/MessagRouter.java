@@ -39,7 +39,7 @@ public class MessagRouter {
 				operationId = "getMessage",
 				parameters = {@Parameter(in = ParameterIn.PATH, name = "roomId", description = "room id")},
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -60,7 +60,7 @@ public class MessagRouter {
 				description = "메세지 생성 API - 방 아이디를 통하여 메세지 생성",
 				summary = "메세지 생성 API",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = RoomListResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -73,6 +73,7 @@ public class MessagRouter {
 				tags = "WebSocket",
 				operationId = "websocket",
 				summary = "실시간 채팅 WS",
+				description = "실시간 채팅 API - JWT 토큰과 방ID 그리고 메세지를 전달받아서 웹통신. 통신 성공되면 데이터 저장",
 				parameters = {
 					@Parameter(name = "roomId", in = ParameterIn.PATH, required = true, description = "roomId")
 				},

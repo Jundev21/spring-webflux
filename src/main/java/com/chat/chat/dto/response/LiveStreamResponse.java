@@ -10,14 +10,14 @@ import lombok.Builder;
 public record LiveStreamResponse(
 	String messageContent,
 	String roomId,
-	String userId,
+	String memberSenderId,
 	LocalDateTime sendDate
 ) {
 	static public LiveStreamResponse liveStreamResponse(Message message) {
 		return LiveStreamResponse.builder()
 			.messageContent(message.getContent())
 			.roomId(message.getRoomId())
-			.userId(message.getMemberSenderId())
+			.memberSenderId(message.getMemberSenderId())
 			.sendDate(message.getLocalDateTime())
 			.build();
 	}

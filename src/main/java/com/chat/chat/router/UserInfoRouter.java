@@ -39,7 +39,7 @@ public class UserInfoRouter {
 				operationId = "searchMember",
 				summary = "사용자 검색 API",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = MemberResponse.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = MemberResponse.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
@@ -60,24 +60,32 @@ public class UserInfoRouter {
 				description = "회원 정보 수정 API - 사용자 아이디와 비밀번호를 통하여 로그인",
 				summary = "회원 정보 수정 API",
 				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = Member.class))),
+					@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = Member.class))),
 					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 				}
 			)
 		),
-		@RouterOperation(
-			path = "/api/user",
-			method = RequestMethod.DELETE,
-			operation = @Operation(
-				tags = "Member",
-				operationId = "postMessage",
-				summary = "회원탈퇴 API",
-				responses = {
-					@ApiResponse(responseCode = "201", content = @Content(mediaType = "사용자 삭제 성공")),
-					@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-				}
-			)
-		),
+		// @RouterOperation(
+		// 	path = "/api/user",
+		// 	method = RequestMethod.DELETE,
+		// 	operation = @Operation(
+		// 		tags = "Member",
+		// 		operationId = "postMessage",
+		// 		requestBody = @RequestBody(
+		// 			required = true,
+		// 			description = " 바디 필수값 - 사용자 아이디 , 비밀번호",
+		// 			content = @Content(
+		// 				schema = @Schema(implementation = MemberRequest.class)
+		// 			)
+		// 		),
+		// 		description = "회원탈퇴 API",
+		// 		summary = "회원탈퇴 API",
+		// 		responses = {
+		// 			@ApiResponse(responseCode = "200", content = @Content(mediaType = "사용자 삭제 성공")),
+		// 			@ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+		// 		}
+		// 	)
+		// ),
 	})
 	public RouterFunction<ServerResponse> UserInfoRouters(UserInfoHandler userInfoHandler) {
 		return RouterFunctions
