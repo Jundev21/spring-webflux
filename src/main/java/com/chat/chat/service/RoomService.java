@@ -163,7 +163,7 @@ public class RoomService {
 					.doOnNext(response -> log.info("특정 유저의 방 조회: {}", response))
 					.collectList()));
 
-	}
+    }
 
 	public Mono<List<RoomListResponse>> searchRoomByTitle(String memberId, RoomSearchRequest searchRequest) {
 		return repositorySelector.existInRepo(memberId)
