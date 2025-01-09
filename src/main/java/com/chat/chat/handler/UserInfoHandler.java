@@ -49,19 +49,19 @@ public class UserInfoHandler {
                 .flatMap(memberId -> userInfoService.getUserInfo(memberId))
                 .flatMap(memberResponse -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success(SuccessTypes.USER_INFO_RETRIEVED_SUCCESSFULLY.successMessage,memberResponse)))
-                        .onErrorResume(CustomException.class, error -> {
-                            log.error("CustomError Exception :{}", error.getMessage());
-                            return ServerResponse.badRequest()
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .bodyValue(ResponseUtils.fail(error.getMessage()));
-                        })
-                        .onErrorResume(error -> {
-                            log.error("Unexpected Exception :{}", error.getMessage());
-                            return ServerResponse.status(500)
-                                    .contentType(MediaType.APPLICATION_JSON)
-                                    .bodyValue(ResponseUtils.fail("Internal Server Error"));
-                        });
+                        .bodyValue(ResponseUtils.success(SuccessTypes.USER_INFO_RETRIEVED_SUCCESSFULLY.successMessage, memberResponse)))
+                .onErrorResume(CustomException.class, error -> {
+                    log.error("CustomError Exception :{}", error.getMessage());
+                    return ServerResponse.badRequest()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(ResponseUtils.fail(error.getMessage()));
+                })
+                .onErrorResume(error -> {
+                    log.error("Unexpected Exception :{}", error.getMessage());
+                    return ServerResponse.status(500)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(ResponseUtils.fail("Internal Server Error"));
+                });
 
 
     }
@@ -76,7 +76,7 @@ public class UserInfoHandler {
     public Mono<ServerResponse> editUserInfoHandler(ServerRequest request) {
 
         Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class).doOnNext(memberId -> log.info("memberId:{}", memberId))
-         .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)));
+                .switchIfEmpty(Mono.error(new CustomException(ErrorTypes.NOT_EXIST_MEMBER.errorMessage)));
 
         Mono<MemberRequest> passwordUpdateMono = request.bodyToMono(MemberRequest.class)
                 .flatMap(req -> MemberValidator.validateForEdit(req).thenReturn(req));
@@ -112,46 +112,27 @@ public class UserInfoHandler {
 
     }
 
-    /**
-     * 원래 비밀 번호 + 다시한번 쳐야하는 로직
-     * @param request
-     * @return
-     */
+
 
     public Mono<ServerResponse> deleteUserInfoHandler(ServerRequest request) {
-        Mono<String> memberIdMono = Mono.justOrEmpty(request.attribute("memberId")).cast(String.class).doOnNext(memberId -> log.info("memberId:{}", memberId));
-
-        Mono<MemberRequest> password = request.bodyToMono(MemberRequest.class)
-                .flatMap(req -> MemberValidator.validateForDelete(req).thenReturn(req));
-
-
-        return Mono.zip(memberIdMono, password)
-                .flatMap(two -> {
-                    String memberId = two.getT1();
-                    MemberRequest memberRequest = two.getT2();
-                    return userInfoService.deleteUserInfo(
-                            memberId,
-                            memberRequest.getMemberPassword()
-                    );
-
-                })
-                .flatMap(hello->ServerResponse.ok()
+        return Mono.justOrEmpty(request.attribute("memberId"))
+                .cast(String.class)
+                .doOnNext(memberId -> log.info("memberId:{}", memberId))
+                .flatMap(memberId -> userInfoService.deleteUserInfo(memberId))
+                .then(Mono.defer(() -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(ResponseUtils.success(SuccessTypes.DELETE_SUCCESS.successMessage,null)))
-
+                        .bodyValue(ResponseUtils.success(SuccessTypes.DELETE_SUCCESS.successMessage, null))))
                 .onErrorResume(CustomException.class, error -> {
-                    log.error("CustomError Exception :{}", error.getMessage());
+                    log.error("CustomError Exception: {}", error.getMessage());
                     return ServerResponse.badRequest()
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail(error.getMessage()));
                 })
                 .onErrorResume(error -> {
-                    log.error("Unexpected Exception :{}", error.getMessage());
+                    log.error("Unexpected Exception: {}", error.getMessage());
                     return ServerResponse.status(500)
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(ResponseUtils.fail("Internal Server Error"));
                 });
-
     }
 }
-

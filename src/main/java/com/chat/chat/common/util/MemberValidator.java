@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class MemberValidator {
 
-    //TODO : 1. 필요없는 필드 들어왔을 때 에러처리 2.CustomException ErrorType 으로 매핑
 
 
     public static Mono<Void> validateForLogin(MemberRequest memberRequest) {
@@ -32,8 +31,7 @@ public class MemberValidator {
             return Mono.error (new CustomException(ErrorTypes.INVALID_MEMBER_PW.errorMessage));
         }
 
-        if (memberRequest.getMemberNewPassword() != null ||
-                memberRequest.getMemberPasswordConfirm() != null) {
+        if (memberRequest.getMemberNewPassword() != null ) {
             return Mono.error(new CustomException(ErrorTypes.INVALID_FIELD_VALUE_HAS_BEEN_PROVIDED.errorMessage));
         }
         return Mono.empty();
@@ -49,15 +47,6 @@ public class MemberValidator {
         return Mono.empty();
     }
 
-    public static Mono<Void> validateForDelete(MemberRequest memberRequest) {
-        if (!memberRequest.getMemberPassword().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$") || !memberRequest.getMemberPasswordConfirm().matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
-            return Mono.error( new CustomException(ErrorTypes.INVALID_MEMBER_PW.errorMessage));
-        }
-        if (!memberRequest.getMemberPassword().equals(memberRequest.getMemberPasswordConfirm())) {
-            return Mono.error(new CustomException(ErrorTypes.CHECK_NEW_MEMBER_PW.errorMessage));
-        }
-        return Mono.empty();
-    }
 
 
 }

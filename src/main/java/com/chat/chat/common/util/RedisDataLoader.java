@@ -22,9 +22,8 @@ import reactor.core.publisher.Flux;
  *     Key       ||  Value
  *     memberId  ||  seodonghee     ----  (String)
  *     memberPw  ||  hashpw(memberPw) --- (String)
- *     roomName  ||  실제 방 이름 ---(String)
- *  4. 추가 구현 사항
- *     블랙리스트 토큰 관련
+ *     createdAt  || 몇시 몇분,.,,       ---(String)
+ *
  */
 @Component
 @RequiredArgsConstructor
@@ -39,21 +38,14 @@ public class RedisDataLoader {
     @Bean
     public ApplicationRunner loadDataToRedisBeforeServerStart() {
         return args -> {
-            // Members 데이터를 Redis로 로드
+
           Flux<Member> members = mongoTemplate.findAll(Member.class);
           members.flatMap(redisMemberRepository::saveMember)
 
-// 레디스 코드 바꿈
-//            members.flatMap(member -> redisMemberRepository.saveMember(
-//                            member.getMemberId(),
-//                            member.getMemberPassword(),
-//                            member.getCreatedDate()
-//                    ))
                     .doOnNext(success -> logger.info("Member 레디스에 저장 성공: {}", success))
                     .doOnError(error -> logger.error("Member 레디스 저장 실패: {}", error.getMessage()))
                     .subscribe();
 
-            // Rooms 데이터를 Redis로 로드
 
             logger.info("Redis 데이터 로드 작업 완료.");
         };

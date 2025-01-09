@@ -1,10 +1,14 @@
 package com.chat.chat.repository;
 
+import java.util.List;
+
 import com.chat.chat.entity.Member;
 import com.chat.chat.entity.Message;
 import com.chat.chat.entity.Room;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -16,7 +20,7 @@ import reactor.core.publisher.Mono;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class CustomMemberRepository {
+public class CustomRepository {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
@@ -46,7 +50,9 @@ public class CustomMemberRepository {
     public Mono<Room> updateRoomForDeleteUser(String memberId) {
         Query query = new Query(Criteria.where("groupMembers.memberId").is(memberId));
 
-        Update update = new Update().set("groupMembers.$.memberId", "undefined");
+        Update update = new Update().set("groupMembers.$.memberId", "undefined")
+                .set("groupMembers.$.memberPassword", "undefined")
+                .set("groupMembers.$.createdDate", null);
 
         return mongoTemplate.findAndModify(
                 query,
@@ -75,6 +81,21 @@ public class CustomMemberRepository {
         query.limit(size);
         log.info("쿼리 로그 : title={}, page={}, size={}, query={}", title, page, size, query);
         return mongoTemplate.find(query, Room.class);
+    }
+
+    public Mono<List<Room>> findAllRoomWithPageNation(Pageable pageable) {
+        Query pageableQuery = new Query().with(pageable);
+        return mongoTemplate.find(pageableQuery, Room.class).collectList();
+    }
+
+    public Mono<Long> countAllRooms(){
+        return  mongoTemplate.count(new Query(), Room.class);
+    }
+
+    public Mono<Room> findJoinedMember(String roomId, String memberId){
+        Query findJoinedMember = new Query(Criteria.where("id").is(roomId)
+            .and("groupMembers").elemMatch(Criteria.where("memberId").is(memberId)));
+        return  mongoTemplate.findOne(findJoinedMember, Room.class);
     }
 }
 
